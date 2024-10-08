@@ -1,10 +1,10 @@
 // routes/challengeRoutes.js
-const express = require('express');
-const challengeController = require('../controllers/challengeController');
+import express from 'express';
+import {getAllChallenges, createChallenge, addSubmission} from '../controllers/challengeController.js';
 const router = express.Router();
 
-router.get('/challenges', challengeController.getAllChallenges);
-router.post('/challenges', challengeController.createChallenge);
-router.post('/challenges/:challengeId/stages/:stageId/submissions', challengeController.addSubmission);
+router.get('/challenges', getAllChallenges);
+router.post('/challenges', createChallenge);
+router.post('/challenges/:challengeId/stages/:stageId/submissions', addSubmission);
 
-module.exports = router;
+export default router;

@@ -1,9 +1,10 @@
 // routes/teamRoutes.js
-const express = require('express');
-const teamController = require('../controllers/teamController');
+
+import express from 'express';
+import { createTeam, addMemberToTeam } from '../controllers/teamController.js';
 const router = express.Router();
 
-router.post('/teams', teamController.createTeam); // Create a new team
-router.put('/teams/:teamId/members', teamController.addMemberToTeam); // Add a member to the team
+router.post('/teams', createTeam); // Create a new team
+router.put('/teams/:teamId/members', addMemberToTeam); // Add a member to the team
 
-module.exports = router;
+export default router;

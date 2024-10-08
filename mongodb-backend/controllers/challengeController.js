@@ -1,8 +1,8 @@
 // controllers/challengeController.js
-const Challenge = require('../models/challengeModel');
+import Challenge from '../models/challengeModel.js';
 
 // Get all challenges
-exports.getAllChallenges = async (req, res) => {
+export const getAllChallenges = async (req, res) => {
   try {
     const challenges = await Challenge.find().populate('organizers stages.submissions');
     res.status(200).json(challenges);
@@ -12,7 +12,7 @@ exports.getAllChallenges = async (req, res) => {
 };
 
 // Create a new challenge
-exports.createChallenge = async (req, res) => {
+export const createChallenge = async (req, res) => {
   try {
     const newChallenge = new Challenge(req.body);
     const savedChallenge = await newChallenge.save();
@@ -23,7 +23,7 @@ exports.createChallenge = async (req, res) => {
 };
 
 // Add submission to a challenge stage
-exports.addSubmission = async (req, res) => {
+export const addSubmission = async (req, res) => {
   const { challengeId, stageId } = req.params;
   try {
     const challenge = await Challenge.findById(challengeId);

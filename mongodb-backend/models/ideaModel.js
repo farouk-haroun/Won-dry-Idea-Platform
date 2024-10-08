@@ -1,5 +1,6 @@
 // models/ideaModel.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+
 
 const ideaSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -28,5 +29,5 @@ const ideaSchema = new mongoose.Schema({
 });
 
 const Idea = mongoose.model('Idea', ideaSchema);
-module.exports = Idea;
+export default Idea;
 

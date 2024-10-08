@@ -1,8 +1,8 @@
 // controllers/teamController.js
-const Team = require('../models/teamModel');
+import Team from '../models/teamModel.js';
 
 // Create a team
-exports.createTeam = async (req, res) => {
+export const createTeam = async (req, res) => {
   try {
     const newTeam = new Team(req.body);
     const savedTeam = await newTeam.save();
@@ -12,8 +12,9 @@ exports.createTeam = async (req, res) => {
   }
 };
 
+
 // Add a member to a team
-exports.addMemberToTeam = async (req, res) => {
+export const addMemberToTeam = async (req, res) => {
   try {
     const team = await Team.findById(req.params.teamId);
     if (!team) return res.status(404).json({ message: 'Team not found' });

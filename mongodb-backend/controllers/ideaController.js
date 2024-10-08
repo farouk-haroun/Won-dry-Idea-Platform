@@ -1,8 +1,9 @@
 // controllers/ideaController.js
-const Idea = require('../models/ideaModel');
+import Idea from '../models/ideaModel.js';  
 
 // Get all ideas
-exports.getAllIdeas = async (req, res) => {
+// Get all ideas
+export const getAllIdeas = async (req, res) => {
   try {
     const ideas = await Idea.find().populate('createdBy team challenge');
     res.status(200).json(ideas);
@@ -11,8 +12,9 @@ exports.getAllIdeas = async (req, res) => {
   }
 };
 
+
 // Create a new idea
-exports.createIdea = async (req, res) => {
+export const createIdea = async (req, res) => {
   try {
     const newIdea = new Idea(req.body);
     const savedIdea = await newIdea.save();
@@ -23,7 +25,7 @@ exports.createIdea = async (req, res) => {
 };
 
 // Add a comment to an idea
-exports.addComment = async (req, res) => {
+export const addComment = async (req, res) => {
   const { ideaId } = req.params;
   try {
     const idea = await Idea.findById(ideaId);
@@ -38,13 +40,13 @@ exports.addComment = async (req, res) => {
 };
 
 // Submit feedback for an idea
-exports.submitFeedback = async (req, res) => {
+export const submitFeedback = async (req, res) => {
   const { ideaId } = req.params;
   try {
     const idea = await Idea.findById(ideaId);
     if (!idea) return res.status(404).json({ message: 'Idea not found' });
 
-    idea.feedback = req.body.feedback; // Add scalability, sustainability, etc.
+    idea.feedback = req.body.feedback;
     await idea.save();
     res.status(200).json(idea);
   } catch (error) {

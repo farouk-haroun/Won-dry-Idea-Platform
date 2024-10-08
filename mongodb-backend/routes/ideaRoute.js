@@ -1,11 +1,12 @@
-// routes/ideaRoutes.js
-const express = require('express');
-const ideaController = require('../controllers/ideaController');
+import express from 'express';
+import { getAllIdeas, createIdea, addComment, submitFeedback } from '../controllers/ideaController.js';
+
 const router = express.Router();
 
-router.get('/ideas', ideaController.getAllIdeas);
-router.post('/ideas', ideaController.createIdea);
-router.post('/ideas/:ideaId/comments', ideaController.addComment);
-router.post('/ideas/:ideaId/feedback', ideaController.submitFeedback);
+router.get('/ideas', getAllIdeas);
+router.post('/ideas', createIdea);
+router.post('/ideas/:ideaId/comments', addComment);
+router.post('/ideas/:ideaId/feedback', submitFeedback);
 
-module.exports = router;
+export default router;
+

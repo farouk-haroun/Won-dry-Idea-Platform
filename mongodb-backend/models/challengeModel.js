@@ -1,5 +1,5 @@
 // models/challengeModel.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const challengeSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -18,4 +18,4 @@ const challengeSchema = new mongoose.Schema({
 });
 
 const Challenge = mongoose.model('Challenge', challengeSchema);
-module.exports = Challenge;
+export default Challenge;
