@@ -1,6 +1,6 @@
 
 import express from 'express';  
-import {registerUser, deleteUser} from '../controllers/userController.js';
+import {registerUser, deleteUser, getUserById} from '../controllers/userController.js';
 import User from '../models/userModel.js';
 const router = express.Router();
 // Register a new user
@@ -19,6 +19,9 @@ router.get('/', async (req, res) => {  // Include 'req' parameter
     res.status(500).json({ message: error.message }); // Return the error message in response
   }
 });
+
+//route to get a user by id
+router.get('/:userId', getUserById);
 router.delete('/:userId', deleteUser);
 
 export default router;

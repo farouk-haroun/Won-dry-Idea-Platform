@@ -25,6 +25,7 @@ app.use(cors());
 // process.env.MONGO_URI
 const connectDB = async () => {
   const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
+  // const dbName = 'test'
   const MONGO_URI = `${process.env.MONGO_URI}${dbName}`;
   try {
     await mongoose.connect(MONGO_URI);
