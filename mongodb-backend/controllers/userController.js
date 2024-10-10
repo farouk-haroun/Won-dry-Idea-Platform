@@ -67,3 +67,13 @@ export const getUserById = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// Function to get all users
+export const getAllUsers = async () => {
+  try {
+    const users = await User.find();  // Fetch all users
+    return users;
+  } catch (error) {
+    throw new Error('Error fetching users');
+  }
+};

@@ -44,7 +44,7 @@ describe('Users', () => {
         this.timeout(5000); // Increase timeout for async operations
         let user = {
           name: "John Doe",
-          email: "johndo@example.com",
+          email: "johndoe@example.com",
           password: "password123"
         };
         chai.request(app)
@@ -55,10 +55,26 @@ describe('Users', () => {
             res.body.should.be.a('object');
             res.body.should.have.property('message').eql('User registered successfully');
             res.body.user.should.have.property('name').eql('John Doe');
-            res.body.user.should.have.property('email').eql('johndo@example.com');
+            res.body.user.should.have.property('email').eql('johndoe@example.com');
             done();
           });
       });
+      it('it should not register a user with a duplicate email', (done) => {
+        // Create the user first
+        let user = { name: "John Doe", email: "johndoe@example.com", password: "password123" };
+        new User(user).save().then(() => {
+          // Try to create the user with the same email
+          chai.request(app)
+            .post('/api/users/register')
+            .send(user)  // Sending the same user object to test for duplicate email
+            .end((err, res) => {
+              res.should.have.status(400);  // Assuming 400 is returned for duplicate emails
+              res.body.should.have.property('message').eql('User already exists');
+              done();
+            });
+          });
+      });
+      
     });
 
     /**
@@ -78,22 +94,28 @@ describe('Users', () => {
     });
   });
 
-  // Tests that require existing users
   describe('Tests that require existing users', () => {
-    // Insert a user before running tests that require an existing user
     let testUser;
+  
+    // The beforeEach hook runs before every test in this block
     beforeEach(async function() {
       this.timeout(5000);
-      // Add a user before these specific tests
+      try {
+        await User.deleteMany();  // Clear the User collection only before certain tests
+      } catch (err) {
+        console.error(err);
+      }
+      // This creates a new user and saves it before running each test
       testUser = new User({ name: "Jane Doe", email: "janedoe@example.com", password: "password123" });
-      await testUser.save();
+      await testUser.save();  // Save user to the database
     });
-
+  
     /**
      * Test the GET /api/users/:id route
      */
     describe('/GET/:id user', () => {
       it('it should GET a user by the given id', (done) => {
+        // This test will use the `testUser` created in beforeEach
         chai.request(app)
           .get('/api/users/' + testUser.id)
           .end((err, res) => {
@@ -105,12 +127,13 @@ describe('Users', () => {
           });
       });
     });
-
+  
     /**
      * Test the DELETE /api/users/:id route
      */
     describe('/DELETE/:id user', () => {
-      it('it should DELETE a user given the id', (done) => {
+      it('it should DELETE the user created in beforeEach', (done) => {
+        // This test will delete the `testUser` created in beforeEach
         chai.request(app)
           .delete('/api/users/' + testUser.id)
           .end((err, res) => {
@@ -121,10 +144,4 @@ describe('Users', () => {
       });
     });
   });
-
-  // Close the Mongoose connection after all tests
-  after(async function() {
-    await mongoose.connection.close();
-  });
-
-});
+});  
