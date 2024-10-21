@@ -11,7 +11,7 @@ describe('Login Component', () => {
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
 
-    // Use getAllByRole to get both buttons
+    // Check if the login buttons are rendered
     const buttons = screen.getAllByRole('button');
     
     // Check the content of the buttons to distinguish between them
