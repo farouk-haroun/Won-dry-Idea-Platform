@@ -1,8 +1,7 @@
-
 import express from 'express';  
-import {registerUser, deleteUser, getUserById, getAllUsers} from '../controllers/userController.js';
-import User from '../models/userModel.js';
+import {registerUser, deleteUser, getUserById, getAllUsers, loginUser} from '../controllers/userController.js';
 const router = express.Router();
+
 // Register a new user
 router.post('/register', (req, res, next) => {
   console.log('Register route matched');
@@ -24,5 +23,8 @@ router.get('/', async (req, res) => {  // Include 'req' parameter
 //route to get a user by id
 router.get('/:userId', getUserById);
 router.delete('/:userId', deleteUser);
+
+// Login route
+router.post('/login', loginUser);
 
 export default router;

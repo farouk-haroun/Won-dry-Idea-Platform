@@ -15,6 +15,7 @@ const challengeSchema = new mongoose.Schema({
   attachedFiles: [{ type: String }], // URLs to attached files like guidebooks
   createdAt: { type: Date, default: Date.now },
   status: { type: String, enum: ['open', 'closed'], default: 'open' },
+  thumbnailUrl: { type: String },
 });
 
 const Challenge = mongoose.model('Challenge', challengeSchema);

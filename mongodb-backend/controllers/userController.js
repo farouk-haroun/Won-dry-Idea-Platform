@@ -1,6 +1,7 @@
 // controllers/userController.js
 import bcrypt from 'bcrypt';
 import User from '../models/userModel.js';
+import jwt from 'jsonwebtoken';
 
 // Register a new user
 export const registerUser = async (req, res) => {
@@ -75,5 +76,46 @@ export const getAllUsers = async () => {
     return users;
   } catch (error) {
     throw new Error('Error fetching users');
+  }
+};
+
+// Login user
+export const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Check if the user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if the password is correct
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Create and sign a JWT
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'default_key',
+      { expiresIn: '1h' }
+    );
+
+    // Return user data and token
+    res.status(200).json({
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      },
+      token
+    });
+    
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };

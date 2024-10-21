@@ -1,20 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Bell, Menu, Filter } from 'lucide-react';
-import IdeaCard from '../components/IdeaCard';
+import ChallengeCard from '../components/ChallengeCard';
+import axios from 'axios';
+import { API_BASE_URL } from '../utils/constants';
 
 const Discover = () => {
   const [selectedOptions, setSelectedOptions] = useState(['Challenges']);
+  const [challenges, setChallenges] = useState([]);
+
+  useEffect(() => {
+    fetchChallenges();
+  }, []);
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/challenges/challenges`);
+      setChallenges(response.data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+    }
+  };
+
   const isSelected = (option) => selectedOptions.includes(option);
 
   const toggleOption = (option) => {
     setSelectedOptions(prevSelected => {
       if (prevSelected.includes(option)) {
-        // If this is the only selected option, don't remove it
         if (prevSelected.length === 1) return prevSelected;
-        // Otherwise, remove it
         return prevSelected.filter(item => item !== option);
       } else {
-        // Add the option
         return [...prevSelected, option];
       }
     });
@@ -88,28 +102,12 @@ const Discover = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <IdeaCard
-          title="Idea Innovation Challenge"
-          category="in Social Innovation"
-          stage="Winners Announcement"
-          comments={34}
-          views={23696}
-          ideas={127}
-        />
-        <IdeaCard
-          title="Interactive Dashboards"
-          category="in Commodore Cup 2023 Challenge"
-          author="Mothuso Malunga"
-          comments={34}
-          views={23696}
-          rating={3}
-        />
-        <IdeaCard
-          title="Wond'ry Quantum Studio"
-          members={521}
-          challenges={521}
-          ideas={521}
-        />
+        {challenges.map((challenge) => (
+          <ChallengeCard
+            key={challenge._id}
+            challenge={challenge}
+          />
+        ))}
       </div>
 
       <footer className="mt-8 text-center text-gray-500 text-sm">
