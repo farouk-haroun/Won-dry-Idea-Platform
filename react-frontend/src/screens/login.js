@@ -1,12 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { login, clearError } from '../store/authSlice';
+import axios from 'axios';
+import { API_BASE_URL } from '../utils/constants';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const authError = useSelector(state => state.auth.error);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    // Clear any existing errors when the component mounts
+    dispatch(clearError());
+  }, [dispatch]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login attempt with:', { email, password });
+    
+    try {
+      // Make API call to login
+      const response = await axios.post(`${API_BASE_URL}/users/login`, { email, password });
+      
+      // If login successful, update auth context and redirect to discover page
+      if (response.status === 200) {
+        dispatch(login({
+          id: response.data.user.id,
+          name: response.data.user.name,
+          email: response.data.user.email,
+          token: response.data.token
+        }));
+        
+        navigate('/discover');
+      } else {
+        throw new Error('Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      dispatch(login({ error: 'Invalid credentials. Please try again.' }));
+    }
   };
 
   return (
@@ -19,6 +53,7 @@ function Login() {
       {/* Right side with login form */}
       <div className="w-full md:w-1/2 flex justify-center items-center p-8">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+          {authError && <p className="text-red-500 mb-4">{authError}</p>}
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-2 text-left">Email</label>
@@ -59,11 +94,11 @@ function Login() {
           </form>
           <div className="mt-6 flex justify-between">
             <a href="#" className="text-sm text-gray-600 hover:underline">Forgot password?</a>
-            <a href="#" className="text-sm text-gray-600 hover:underline">Sign Up</a>
+            <Link to="/signup" className="text-sm text-blue-600 hover:underline">Sign Up</Link>
           </div>
         </div>
       </div>
-      </div>
+    </div>
   );
 }
 
