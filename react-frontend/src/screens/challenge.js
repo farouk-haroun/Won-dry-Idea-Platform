@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Star, Share2, Search, Bell, Menu } from 'lucide-react';
+import IdeaCard from '../components/IdeaCard';
 
 const Challenge = () => {
+  const [activeTab, setActiveTab] = useState('overview');
   // Test data
   const challenge = {
     title: "Commodore Cup 2023 Sustainability Challenge",
@@ -31,6 +33,13 @@ const Challenge = () => {
       activeUsers: 521
     }
   };
+
+  // Test ideas data
+  const ideas = [
+    { title: "Solar-Powered Campus Shuttles", category: "Transportation", stage: "Final Showcase", author: "Team Green", comments: 15, views: 230, ideas: 3, rating: 4 },
+    { title: "AI-Driven Energy Optimization", category: "Sustainability Dashboard", stage: "2nd Round Evaluation", author: "Tech Innovators", comments: 22, views: 180, ideas: 5, rating: 5 },
+    { title: "Bike-Sharing Program", category: "Transportation", stage: "1st Evaluation", author: "Eco Riders", comments: 8, views: 120, ideas: 2, rating: 3 },
+  ];
 
   return (
     <div className="bg-white">
@@ -83,54 +92,72 @@ const Challenge = () => {
         </div>
 
         <div className="flex mb-8">
-          <button className="bg-gray-800 text-white px-4 py-2 rounded-md mr-2">Overview</button>
-          <button className="bg-white text-gray-800 px-4 py-2 rounded-md">Ideas</button>
+          <button 
+            className={`px-4 py-2 rounded-md mr-2 ${activeTab === 'overview' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button 
+            className={`px-4 py-2 rounded-md ${activeTab === 'ideas' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
+            onClick={() => setActiveTab('ideas')}
+          >
+            Ideas
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="col-span-2">
-            <h2 className="text-xl font-bold mb-4">Welcome to the {challenge.title}!</h2>
-            <p className="mb-4">{challenge.description}</p>
-            <p className="mb-4">{challenge.format}</p>
-            <p className="mb-4">Participating individuals and teams will submit a design for one of the following design challenge tracks (see more details on each track under 2023 Challenge Details below):</p>
-            <ol className="list-decimal list-inside mb-4">
-              {challenge.tracks.map((track, index) => (
-                <li key={index}>{track}</li>
-              ))}
-            </ol>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Challenge Organizers</h3>
-            <div className="grid grid-cols-2 gap-2 mb-8">
-              {challenge.organizers.map((organizer, index) => (
-                <div key={index} className="flex items-center bg-gray-100 rounded-full py-2 px-4">
-                  <img src={organizer.avatar} alt={organizer.name} className="w-8 h-8 rounded-full mr-2" />
-                  <span className="text-sm">{organizer.name}</span>
+        {activeTab === 'overview' ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="col-span-2">
+              <h2 className="text-xl font-bold mb-4">Welcome to the {challenge.title}!</h2>
+              <p className="mb-4">{challenge.description}</p>
+              <p className="mb-4">{challenge.format}</p>
+              <p className="mb-4">Participating individuals and teams will submit a design for one of the following design challenge tracks (see more details on each track under 2023 Challenge Details below):</p>
+              <ol className="list-decimal list-inside mb-4">
+                {challenge.tracks.map((track, index) => (
+                  <li key={index}>{track}</li>
+                ))}
+              </ol>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Challenge Organizers</h3>
+              <div className="grid grid-cols-2 gap-2 mb-8">
+                {challenge.organizers.map((organizer, index) => (
+                  <div key={index} className="flex items-center bg-gray-100 rounded-full py-2 px-4">
+                    <img src={organizer.avatar} alt={organizer.name} className="w-8 h-8 rounded-full mr-2" />
+                    <span className="text-sm">{organizer.name}</span>
+                  </div>
+                ))}
+              </div>
+              <h3 className="text-lg font-semibold mb-4">Community</h3>
+              <div className="bg-gray-100 rounded-md p-4 mb-8 text-center">
+                <img src={challenge.community.avatar} alt={challenge.community.name} className="w-16 h-16 rounded-full mx-auto mb-2" />
+                <p>{challenge.community.name}</p>
+              </div>
+              <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{challenge.metrics.views}</p>
+                  <p className="text-sm text-gray-600">views</p>
                 </div>
-              ))}
-            </div>
-            <h3 className="text-lg font-semibold mb-4">Community</h3>
-            <div className="bg-gray-100 rounded-md p-4 mb-8 text-center">
-              <img src={challenge.community.avatar} alt={challenge.community.name} className="w-16 h-16 rounded-full mx-auto mb-2" />
-              <p>{challenge.community.name}</p>
-            </div>
-            <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{challenge.metrics.views}</p>
-                <p className="text-sm text-gray-600">views</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{challenge.metrics.totalIdeas}</p>
-                <p className="text-sm text-gray-600">total ideas</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{challenge.metrics.activeUsers}</p>
-                <p className="text-sm text-gray-600">active users</p>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{challenge.metrics.totalIdeas}</p>
+                  <p className="text-sm text-gray-600">total ideas</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{challenge.metrics.activeUsers}</p>
+                  <p className="text-sm text-gray-600">active users</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {ideas.map((idea, index) => (
+              <IdeaCard key={index} {...idea} />
+            ))}
+          </div>
+        )}
       </div>
 
       <footer className="mt-8 text-center text-gray-500 text-sm pb-4">
