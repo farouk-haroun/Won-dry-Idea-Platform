@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Bell, Menu, Star, MessageCircle, Eye } from 'lucide-react';
+import ProfilePopup from '../components/ProfilePopup';
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Implement logout logic here
+    // For example: clear local storage, reset auth state, etc.
+    navigate('/login');
+  };
+
   return (
     <div className="bg-[#fdfbf6] min-h-screen">
       {/* Header */}
@@ -21,8 +32,19 @@ const Home = () => {
           <Search className="text-gray-500 cursor-pointer" />
           <Bell className="text-gray-500 cursor-pointer" />
           <Menu className="text-gray-500 md:hidden cursor-pointer" />
-          <div className="w-14 h-14 bg-[#2c2c2c] rounded-full flex items-center justify-center text-white text-xl">
-            MM
+          <div className="relative">
+            <div 
+              className="w-14 h-14 bg-[#2c2c2c] rounded-full flex items-center justify-center text-white text-xl cursor-pointer"
+              onClick={() => setShowProfilePopup(!showProfilePopup)}
+            >
+              MM
+            </div>
+            {showProfilePopup && (
+              <ProfilePopup 
+                onClose={() => setShowProfilePopup(false)}
+                onLogout={handleLogout}
+              />
+            )}
           </div>
         </div>
       </header>

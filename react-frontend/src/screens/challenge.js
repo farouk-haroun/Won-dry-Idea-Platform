@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Share2, Search, Bell, Menu } from 'lucide-react';
 import IdeaCard from '../components/IdeaCard';
+import ProfilePopup from '../components/ProfilePopup';
 
 const Challenge = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const navigate = useNavigate();
   // Test data
   const challenge = {
     title: "Commodore Cup 2023 Sustainability Challenge",
@@ -41,6 +44,16 @@ const Challenge = () => {
     { title: "Bike-Sharing Program", category: "Transportation", stage: "1st Evaluation", author: "Eco Riders", comments: 8, views: 120, ideas: 2, rating: 3 },
   ];
 
+  const handleLogout = () => {
+    // Implement logout logic here
+    // For example: clear local storage, reset auth state, etc.
+    navigate('/login');
+  };
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="bg-white">
       <header className="flex items-center justify-between p-4 border-b">
@@ -58,15 +71,26 @@ const Challenge = () => {
           <Search className="text-gray-500 cursor-pointer" />
           <Bell className="text-gray-500 cursor-pointer" />
           <Menu className="text-gray-500 md:hidden cursor-pointer" />
-          <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white">
-            MM
+          <div className="relative">
+            <div 
+              className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white cursor-pointer"
+              onClick={() => setShowProfilePopup(!showProfilePopup)}
+            >
+              MM
+            </div>
+            {showProfilePopup && (
+              <ProfilePopup 
+                onClose={() => setShowProfilePopup(false)}
+                onLogout={handleLogout}
+              />
+            )}
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center mb-6">
-          <button className="mr-4">
+          <button className="mr-4" onClick={handleBack}>
             <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-2xl font-bold flex-grow">{challenge.title}</h1>

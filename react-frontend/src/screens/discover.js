@@ -3,8 +3,9 @@ import { Search, Bell, Menu, Filter, X, Calendar, ChevronDown } from 'lucide-rea
 import ChallengeCard from '../components/ChallengeCard';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/constants';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
+import ProfilePopup from '../components/ProfilePopup';
 
 const Discover = () => {
   const [selectedOptions, setSelectedOptions] = useState(['Challenges']);
@@ -21,6 +22,8 @@ const Discover = () => {
     publishDateTo: '2024-09-05',
     keywords: ['SUSTAINABILITY'],
   });
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchChallenges();
@@ -67,6 +70,12 @@ const Discover = () => {
     }));
   };
 
+  const handleLogout = () => {
+    // Implement logout logic here
+    // For example: clear local storage, reset auth state, etc.
+    navigate('/login');
+  };
+
   return (
     <div className="bg-white p-16">
       <header className="flex items-center justify-between mb-4">
@@ -84,8 +93,19 @@ const Discover = () => {
           <Search className="text-gray-500 cursor-pointer" />
           <Bell className="text-gray-500 cursor-pointer" />
           <Menu className="text-gray-500 md:hidden cursor-pointer" />
-          <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white">
-            MM
+          <div className="relative">
+            <div 
+              className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white cursor-pointer"
+              onClick={() => setShowProfilePopup(!showProfilePopup)}
+            >
+              MM
+            </div>
+            {showProfilePopup && (
+              <ProfilePopup 
+                onClose={() => setShowProfilePopup(false)}
+                onLogout={handleLogout}
+              />
+            )}
           </div>
         </div>
       </header>
