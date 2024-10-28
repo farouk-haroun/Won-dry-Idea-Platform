@@ -1,5 +1,13 @@
 import express from 'express';  
-import {registerUser, deleteUser, getUserById, getAllUsers, loginUser} from '../controllers/userController.js';
+import {
+  registerUser, 
+  deleteUser, 
+  getUserById, 
+  getAllUsers, 
+  loginUser,
+logoutUser,
+requestPasswordReset,
+resetPassword} from '../controllers/userController.js';
 const router = express.Router();
 
 // Register a new user
@@ -26,5 +34,11 @@ router.delete('/:userId', deleteUser);
 
 // Login route
 router.post('/login', loginUser);
+router.post('/logout', logoutUser);
+
+router.post('/password-reset', requestPasswordReset);
+
+// Reset password route
+router.post('/reset-password', resetPassword);
 
 export default router;

@@ -15,17 +15,21 @@ dotenv.config();  // Load environment variables from .env file
 // Initialize the Express application
 const app = express();
 
-const PORT = process.env.PORT || 5900;
+const PORT = process.env.PORT || 5000;
 
 // Middleware to parse JSON
 app.use(express.json());
-app.use(cors());
+
+// CORS Configuration
+const corsOptions = {
+  origin: 'http://localhost:3000',  // Replace this with your frontend domain in production
+  credentials: true,                // Allow credentials (cookies, headers)
+};
+app.use(cors(corsOptions));          // Apply the CORS middleware with options
 
 // MongoDB connection
-// process.env.MONGO_URI
 const connectDB = async () => {
   const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
-  // const dbName = 'test'
   const MONGO_URI = `${process.env.MONGO_URI}${dbName}`;
   try {
     await mongoose.connect(MONGO_URI);
@@ -42,13 +46,13 @@ app.get('/', (req, res) => {
 });
 
 // Registering routes here with corrected imports
-app.use('/api/ideas', ideaRoutes); // Register the idea routes under /api/ideas
+app.use('/api/ideas', ideaRoutes);  // Register the idea routes under /api/ideas
 app.use('/api/users', (req, res, next) => {
   console.log('User route accessed');
   next();
 }, userRoutes);
-app.use('/api/teams', teamRoutes); // Register the team routes under /api/teams
-app.use('/api/challenges', challengeRoutes); // Register the challenge routes under /api/challenges);
+app.use('/api/teams', teamRoutes);  // Register the team routes under /api/teams
+app.use('/api/challenges', challengeRoutes);  // Register the challenge routes under /api/challenges
 
 // Start the server only if the file is not being imported (i.e., when running directly)
 if (process.env.NODE_ENV !== 'test') {
