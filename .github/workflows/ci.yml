@@ -1,0 +1,41 @@
+# .github/workflows/ci.yml
+name: CI - Backend Tests
+
+on:
+  push:
+    branches: 
+      - '*'     # Trigger on push to any branch
+  pull_request:
+    branches: 
+      - '*'     # Trigger on pull request to any branch
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    defaults:
+      run:
+        working-directory: mongodb-backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        env:
+          MONGO_URI: "mongodb+srv://farharn:gEW3ivzPXjWUbvBi@ideas-platform-cluster.9oqgm.mongodb.net/"
+          MONGO_URI_TEST: "mongodb+srv://farharn:gEW3ivzPXjWUbvBi@ideas-platform-cluster.9oqgm.mongodb.net/test"
+          JWT_SECRET: "080140ac076af13764329ca2a6d14a52d3014c41a8b135b08ab4646f5b91e570930768d22efb7d1c14729da68c7cd4048b9d756dfaa896a8019534b548dabd5f"
+        run: npm test
