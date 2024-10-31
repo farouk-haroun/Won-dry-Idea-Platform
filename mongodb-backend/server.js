@@ -54,6 +54,7 @@ app.use('/api/users', (req, res, next) => {
 app.use('/api/teams', teamRoutes);  // Register the team routes under /api/teams
 app.use('/api/challenges', challengeRoutes);  // Register the challenge routes under /api/challenges
 
+
 // Start the server only if the file is not being imported (i.e., when running directly)
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
