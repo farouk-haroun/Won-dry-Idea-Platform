@@ -1,8 +1,10 @@
 # Node.js related files
+!.github/workflows/
 node_modules/
 npm-debug.log
 yarn-error.log
 .pnpm-debug.log
+
 
 # MacOS generated files
 .DS_Store
@@ -44,14 +46,7 @@ dist/
 .vscode/
 .idea/
 
-# Python related files (if you're using Django)
-*.pyc
-__pycache__/
-*.pyo
-*.pyd
-*.pdb
-*.egg-info/
-.eggs/
+
 
 # Other specific files
 *.swp
