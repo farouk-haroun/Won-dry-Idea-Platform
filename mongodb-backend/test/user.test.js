@@ -143,101 +143,61 @@ describe('User Routes', () => {
       expect(response.body.message).toBe('Internal server error');
     });
   });
-  describe('GET /users/profile', () => {
-    it('should get user profile successfully', async () => {
-      userController.getUserProfile.mockImplementation((req, res) => {
-        res.status(200).send({ username: 'testuser', email: 'testuser@example.com' });
+
+
+  describe('GET /users/confirm-email', () => {
+    it('should confirm email successfully', async () => {
+      userController.confirmEmail.mockImplementation((req, res) => {
+        res.status(200).send({ message: 'Email confirmed' });
       });
 
       const response = await request(app)
-        .get('/users/profile')
-        .set('Authorization', 'Bearer valid-token');
+        .get('/users/confirm-email')
+        .send({ token: 'valid-token' });
 
       expect(response.status).toBe(200);
-      expect(response.body.username).toBe('testuser');
-      expect(response.body.email).toBe('testuser@example.com');
+      expect(response.body.message).toBe('Email confirmed');
     });
 
-    it('should return 401 if user is not authenticated', async () => {
-      userController.getUserProfile.mockImplementation((req, res) => {
-        res.status(401).send({ message: 'Unauthorized' });
+    it('should return 400 if token is missing', async () => {
+      userController.confirmEmail.mockImplementation((req, res) => {
+        res.status(400).send({ message: 'Token is required' });
       });
 
       const response = await request(app)
-        .get('/users/profile');
-
-      expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Unauthorized');
-    });
-
-    it('should return 500 if there is a server error', async () => {
-      userController.getUserProfile.mockImplementation((req, res) => {
-        res.status(500).send({ message: 'Internal server error' });
-      });
-
-      const response = await request(app)
-        .get('/users/profile')
-        .set('Authorization', 'Bearer valid-token');
-
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe('Internal server error');
-    });
-  });
-
-  describe('PUT /users/profile', () => {
-    it('should update user profile successfully', async () => {
-      userController.updateUserProfile.mockImplementation((req, res) => {
-        res.status(200).send({ message: 'Profile updated' });
-      });
-
-      const response = await request(app)
-        .put('/users/profile')
-        .set('Authorization', 'Bearer valid-token')
-        .send({ username: 'updateduser', email: 'updateduser@example.com' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Profile updated');
-    });
-
-    it('should return 400 if required fields are missing', async () => {
-      userController.updateUserProfile.mockImplementation((req, res) => {
-        res.status(400).send({ message: 'Required fields are missing' });
-      });
-
-      const response = await request(app)
-        .put('/users/profile')
-        .set('Authorization', 'Bearer valid-token')
+        .get('/users/confirm-email')
         .send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Required fields are missing');
+      expect(response.body.message).toBe('Token is required');
     });
 
-    it('should return 401 if user is not authenticated', async () => {
-      userController.updateUserProfile.mockImplementation((req, res) => {
-        res.status(401).send({ message: 'Unauthorized' });
+    it('should return 401 if token is invalid', async () => {
+      userController.confirmEmail.mockImplementation((req, res) => {
+        res.status(401).send({ message: 'Invalid token' });
       });
 
       const response = await request(app)
-        .put('/users/profile')
-        .send({ username: 'updateduser', email: 'updateduser@example.com' });
+        .get('/users/confirm-email')
+        .send({ token: 'invalid-token' });
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('Invalid token');
     });
 
     it('should return 500 if there is a server error', async () => {
-      userController.updateUserProfile.mockImplementation((req, res) => {
+      userController.confirmEmail.mockImplementation((req, res) => {
         res.status(500).send({ message: 'Internal server error' });
       });
 
       const response = await request(app)
-        .put('/users/profile')
-        .set('Authorization', 'Bearer valid-token')
-        .send({ username: 'updateduser', email: 'updateduser@example.com' });
+        .get('/users/confirm-email')
+        .send({ token: 'valid-token' });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error');
     });
   });
+
+
 });

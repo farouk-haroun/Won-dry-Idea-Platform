@@ -3,13 +3,14 @@ import bcrypt from 'bcrypt';
 import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer'; // To send emails
-
+const EMAIL_USER= "vanderbiltwondry@gmail.com"
+const EMAIL_PASSWORD= "puwiohofidaucscy"
 // Set up email transporter
 const transporter = nodemailer.createTransport({
   service: 'gmail', // use your preferred email provider
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
+    user:EMAIL_USER,
+    pass:EMAIL_PASSWORD
   }
 });
 
