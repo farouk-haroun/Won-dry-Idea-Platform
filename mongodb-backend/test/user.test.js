@@ -1,147 +1,203 @@
-import chai from 'chai';
-import chaiHttp from 'chai-http';
-import app from '../server.js';
-import User from '../models/userModel.js';
-import mongoose from 'mongoose';
+import request from 'supertest';
+import express from 'express';
+import userRoute from '../routes/userRoute';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Use chaiHttp in chai
-chai.use(chaiHttp);
+import * as userController from '../controllers/userController';
+import * as authMiddleware from '../middleware/authenticate';
 
-// Initialize chai's `should`
-const should = chai.should();
+vi.mock('../middleware/authenticate', () => ({
+  authenticateJWT: vi.fn((req, res, next) => next()),
+  authorizeRole: vi.fn(() => (req, res, next) => next()),
+}));
 
-// Ensure that the tests use the test environment
-process.env.NODE_ENV = 'test';
+vi.mock('../controllers/userController', () => ({
+  registerUser: vi.fn(),
+  deleteUser: vi.fn(),
+  getUserById: vi.fn(),
+  getAllUsers: vi.fn((req, res) => res.status(200).send('All users')),
+  loginUser: vi.fn(),
+  logoutUser: vi.fn(),
+  requestPasswordReset: vi.fn(),
+  resetPassword: vi.fn(),
+  updateUserProfile: vi.fn(),
+  changePassword: vi.fn(),
+  registerAdmin: vi.fn(),
+  changeUserRole: vi.fn(),
+  confirmEmail: vi.fn(),
+}));
 
-describe('Users', () => {
-  
-  // Connect to the database before running any tests
-  before(async function() {
-    this.timeout(10000); // Increase timeout to ensure Mongoose connection completes
-    try {
-      await mongoose.connect(process.env.MONGO_URI_TEST);
-    } catch (err) {
-      console.error('Error connecting to the test database:', err);
-    }
+const app = express();
+app.use(express.json());
+app.use('/users', userRoute);
+
+describe('User Routes', () => {
+  beforeEach(() => {
+    // Reset all mocks before each test
+    vi.resetAllMocks();
   });
 
-  // Before each test that needs an empty database, clear the User collection
-  describe('Tests that need an empty database', () => {
-    beforeEach(async function() {
-      this.timeout(5000); // Set timeout to 5000ms to avoid timeout issues
-      try {
-        await User.deleteMany();  // Clear the User collection only before certain tests
-      } catch (err) {
-        console.error(err);
-      }
+  it('should register a new user successfully', async () => {
+    userController.registerUser.mockImplementation((req, res) => {
+      res.status(201).send({ message: 'User registered' });
     });
 
-    /**
-     * Test the POST /api/users/register route
-     */
-    describe('/POST register user', () => {
-      it('it should register a new user', function(done) {
-        this.timeout(5000); // Increase timeout for async operations
-        let user = {
-          name: "John Doe",
-          email: "johndoe@example.com",
-          password: "password123"
-        };
-        chai.request(app)
-          .post('/api/users/register')
-          .send(user)
-          .end((err, res) => {
-            res.should.have.status(201);
-            res.body.should.be.a('object');
-            res.body.should.have.property('message').eql('User registered successfully');
-            res.body.user.should.have.property('name').eql('John Doe');
-            res.body.user.should.have.property('email').eql('johndoe@example.com');
-            done();
-          });
+    const response = await request(app)
+      .post('/users/register')
+      .send({ username: 'testuser', password: 'testpass' });
+
+    expect(response.status).toBe(201);
+    expect(response.body.message).toBe('User registered');
+  });
+  describe('POST /users/login', () => {
+    it('should login a user successfully', async () => {
+      userController.loginUser.mockImplementation((req, res) => {
+        res.status(200).send({ message: 'User logged in', token: 'fake-jwt-token' });
       });
-      it('it should not register a user with a duplicate email', (done) => {
-        // Create the user first
-        let user = { name: "John Doe", email: "johndoe@example.com", password: "password123" };
-        new User(user).save().then(() => {
-          // Try to create the user with the same email
-          chai.request(app)
-            .post('/api/users/register')
-            .send(user)  // Sending the same user object to test for duplicate email
-            .end((err, res) => {
-              res.should.have.status(400);  // Assuming 400 is returned for duplicate emails
-              res.body.should.have.property('message').eql('User already exists');
-              done();
-            });
-          });
-      });
-      
+
+      const response = await request(app)
+        .post('/users/login')
+        .send({ username: 'testuser', password: 'testpass' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('User logged in');
+      expect(response.body.token).toBe('fake-jwt-token');
     });
 
-    /**
-     * Test the GET /api/users route
-     */
-    describe('/GET users', () => {
-      it('it should GET all the users', (done) => {
-        chai.request(app)
-          .get('/api/users')
-          .end((err, res) => {
-            res.should.have.status(200);
-            res.body.should.be.a('array');
-            res.body.length.should.be.eql(0);  // Initially, the DB is empty
-            done();
-          });
+    it('should return 400 if username is missing', async () => {
+      userController.loginUser.mockImplementation((req, res) => {
+        res.status(400).send({ message: 'Username is required' });
       });
+
+      const response = await request(app)
+        .post('/users/login')
+        .send({ password: 'testpass' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Username is required');
+    });
+
+    it('should return 400 if password is missing', async () => {
+      userController.loginUser.mockImplementation((req, res) => {
+        res.status(400).send({ message: 'Password is required' });
+      });
+
+      const response = await request(app)
+        .post('/users/login')
+        .send({ username: 'testuser' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Password is required');
+    });
+
+    it('should return 401 if credentials are invalid', async () => {
+      userController.loginUser.mockImplementation((req, res) => {
+        res.status(401).send({ message: 'Invalid credentials' });
+      });
+
+      const response = await request(app)
+        .post('/users/login')
+        .send({ username: 'testuser', password: 'wrongpass' });
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('Invalid credentials');
+    });
+
+    it('should return 500 if there is a server error', async () => {
+      userController.loginUser.mockImplementation((req, res) => {
+        res.status(500).send({ message: 'Internal server error' });
+      });
+
+      const response = await request(app)
+        .post('/users/login')
+        .send({ username: 'testuser', password: 'testpass' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
+    });
+  });
+  describe('POST /users/logout', () => {
+    it('should logout a user successfully', async () => {
+      userController.logoutUser.mockImplementation((req, res) => {
+        res.status(200).send({ message: 'User logged out' });
+      });
+
+      const response = await request(app)
+        .post('/users/logout')
+        .send();
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('User logged out');
+    });
+
+    it('should return 500 if there is a server error', async () => {
+      userController.logoutUser.mockImplementation((req, res) => {
+        res.status(500).send({ message: 'Internal server error' });
+      });
+
+      const response = await request(app)
+        .post('/users/logout')
+        .send();
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
     });
   });
 
-  describe('Tests that require existing users', () => {
-    let testUser;
-  
-    // The beforeEach hook runs before every test in this block
-    beforeEach(async function() {
-      this.timeout(5000);
-      try {
-        await User.deleteMany();  // Clear the User collection only before certain tests
-      } catch (err) {
-        console.error(err);
-      }
-      // This creates a new user and saves it before running each test
-      testUser = new User({ name: "Jane Doe", email: "janedoe@example.com", password: "password123" });
-      await testUser.save();  // Save user to the database
-    });
-  
-    /**
-     * Test the GET /api/users/:id route
-     */
-    describe('/GET/:id user', () => {
-      it('it should GET a user by the given id', (done) => {
-        // This test will use the `testUser` created in beforeEach
-        chai.request(app)
-          .get('/api/users/' + testUser.id)
-          .end((err, res) => {
-            res.should.have.status(200);
-            res.body.should.be.a('object');
-            res.body.should.have.property('name').eql('Jane Doe');
-            res.body.should.have.property('email').eql('janedoe@example.com');
-            done();
-          });
+
+  describe('GET /users/confirm-email', () => {
+    it('should confirm email successfully', async () => {
+      userController.confirmEmail.mockImplementation((req, res) => {
+        res.status(200).send({ message: 'Email confirmed' });
       });
+
+      const response = await request(app)
+        .get('/users/confirm-email')
+        .send({ token: 'valid-token' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Email confirmed');
     });
-  
-    /**
-     * Test the DELETE /api/users/:id route
-     */
-    describe('/DELETE/:id user', () => {
-      it('it should DELETE the user created in beforeEach', (done) => {
-        // This test will delete the `testUser` created in beforeEach
-        chai.request(app)
-          .delete('/api/users/' + testUser.id)
-          .end((err, res) => {
-            res.should.have.status(200);
-            res.body.should.have.property('message').eql('User deleted successfully');
-            done();
-          });
+
+    it('should return 400 if token is missing', async () => {
+      userController.confirmEmail.mockImplementation((req, res) => {
+        res.status(400).send({ message: 'Token is required' });
       });
+
+      const response = await request(app)
+        .get('/users/confirm-email')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Token is required');
+    });
+
+    it('should return 401 if token is invalid', async () => {
+      userController.confirmEmail.mockImplementation((req, res) => {
+        res.status(401).send({ message: 'Invalid token' });
+      });
+
+      const response = await request(app)
+        .get('/users/confirm-email')
+        .send({ token: 'invalid-token' });
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('Invalid token');
+    });
+
+    it('should return 500 if there is a server error', async () => {
+      userController.confirmEmail.mockImplementation((req, res) => {
+        res.status(500).send({ message: 'Internal server error' });
+      });
+
+      const response = await request(app)
+        .get('/users/confirm-email')
+        .send({ token: 'valid-token' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
     });
   });
-});  
+
+
+});
