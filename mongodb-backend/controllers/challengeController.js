@@ -36,3 +36,5 @@ export const addSubmission = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+//create a challenge, delete a challenge, join a challenge, 
