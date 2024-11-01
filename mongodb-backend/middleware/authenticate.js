@@ -1,21 +1,31 @@
+// middleware/authenticate.js
 import jwt from 'jsonwebtoken';
 
-// Middleware to authenticate JWT
 export const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
+
   if (authHeader) {
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    const token = authHeader.split(' ')[1]; // Extract the token from the Authorization header
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decodedToken) => {
       if (err) {
-        return res.sendStatus(403); // Forbidden if token is invalid
+        return res.status(403).json({ message: 'Invalid or expired token' });
       }
-      req.user = user; // Attach user info to request
+
+      // Attach user info from the token to req.user
+      req.user = {
+        userId: decodedToken.userId,  // Add userId to req.user for easy access
+        email: decodedToken.email,    // Add email if needed
+        role: decodedToken.role       // Add role if needed
+      };
+
       next();
     });
   } else {
-    res.sendStatus(401); // Unauthorized if no token is provided
+    res.status(401).json({ message: 'Authorization header missing' });
   }
 };
+
 export const authorizeRole = (requiredRole) => {
   return (req, res, next) => {
     // Check if the user is authenticated and their role
