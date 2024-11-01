@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../utils/constants';
 import { Link, useNavigate } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import ProfilePopup from '../components/ProfilePopup';
+import AdminCreateChallengePopup from '../components/AdminCreateChallengePopup';
 
 const Discover = () => {
   const [selectedOptions, setSelectedOptions] = useState(['Challenges']);
@@ -23,6 +24,7 @@ const Discover = () => {
     keywords: ['SUSTAINABILITY'],
   });
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [showCreateChallenge, setShowCreateChallenge] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +34,8 @@ const Discover = () => {
   const fetchChallenges = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/challenges/challenges`);
+      console.log(response.data);
+      
       setChallenges(response.data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
@@ -92,6 +96,12 @@ const Discover = () => {
         <div className="flex items-center space-x-4">
           <Search className="text-gray-500 cursor-pointer" />
           <Bell className="text-gray-500 cursor-pointer" />
+          <button
+            onClick={() => setShowCreateChallenge(true)}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Create Challenge
+          </button>
           <Menu className="text-gray-500 md:hidden cursor-pointer" />
           <div className="relative">
             <div 
@@ -197,69 +207,69 @@ const Discover = () => {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-8 text-left align-middle shadow-xl transition-all">
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900 text-center mb-4"
+                    className="text-2xl font-medium leading-6 text-gray-900 text-center mb-8"
                   >
                     Filter
                   </Dialog.Title>
                   <button
                     type="button"
-                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-500"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
                     onClick={toggleFilter}
                   >
                     <X className="h-6 w-6" aria-hidden="true" />
                   </button>
                   
-                  <div className="mt-2 space-y-4">
-                    <div className="flex flex-wrap gap-4">
+                  <div className="mt-4 space-y-8">
+                    <div className="flex flex-wrap gap-6">
                       {['myContent', 'followedContent', 'myEvaluations', 'archived'].map((option) => (
                         <label key={option} className="inline-flex items-center">
                           <input
                             type="checkbox"
-                            className="form-checkbox h-5 w-5 text-purple-600"
+                            className="form-checkbox h-5 w-5 text-purple-600 rounded"
                             checked={filterOptions[option]}
                             onChange={(e) => handleFilterChange(option, e.target.checked)}
                           />
-                          <span className="ml-2 text-gray-700">
+                          <span className="ml-3 text-gray-700">
                             {option.charAt(0).toUpperCase() + option.slice(1).replace(/([A-Z])/g, ' $1')}
                           </span>
                         </label>
                       ))}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-6">
                       {['category', 'status'].map((field) => (
                         <div key={field} className="flex items-center">
-                          <label className="w-24 text-gray-700">{field.charAt(0).toUpperCase() + field.slice(1)}:</label>
+                          <label className="w-32 text-gray-700 font-medium">{field.charAt(0).toUpperCase() + field.slice(1)}:</label>
                           <div className="relative flex-1">
                             <select
-                              className="w-full p-2 border rounded-lg appearance-none"
+                              className="w-full p-3 border rounded-lg appearance-none bg-white"
                               value={filterOptions[field]}
                               onChange={(e) => handleFilterChange(field, e.target.value)}
                             >
                               <option value={filterOptions[field]}>{filterOptions[field]}</option>
                               {/* Add more options as needed */}
                             </select>
-                            <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                           </div>
                         </div>
                       ))}
 
                       <div className="flex items-center">
-                        <label className="w-24 text-gray-700">Publish Date:</label>
-                        <div className="flex-1 flex items-center space-x-2">
+                        <label className="w-32 text-gray-700 font-medium">Publish Date:</label>
+                        <div className="flex-1 flex items-center space-x-4">
                           <input
                             type="date"
-                            className="flex-1 p-2 border rounded-lg"
+                            className="flex-1 p-3 border rounded-lg bg-white"
                             value={filterOptions.publishDateFrom}
                             onChange={(e) => handleFilterChange('publishDateFrom', e.target.value)}
                           />
-                          <span>to</span>
+                          <span className="text-gray-500">to</span>
                           <input
                             type="date"
-                            className="flex-1 p-2 border rounded-lg"
+                            className="flex-1 p-3 border rounded-lg bg-white"
                             value={filterOptions.publishDateTo}
                             onChange={(e) => handleFilterChange('publishDateTo', e.target.value)}
                           />
@@ -268,19 +278,19 @@ const Discover = () => {
                       </div>
 
                       <div className="flex items-center">
-                        <label className="w-24 text-gray-700">Keywords:</label>
+                        <label className="w-32 text-gray-700 font-medium">Keywords:</label>
                         <div className="flex-1 flex flex-wrap gap-2">
                           {filterOptions.keywords.map((keyword) => (
-                            <span key={keyword} className="bg-gray-800 text-white px-2 py-1 rounded-full text-sm flex items-center">
+                            <span key={keyword} className="bg-gray-800 text-white px-3 py-1.5 rounded-full text-sm flex items-center">
                               {keyword}
-                              <button onClick={() => handleKeywordRemove(keyword)} className="ml-1 focus:outline-none">
+                              <button onClick={() => handleKeywordRemove(keyword)} className="ml-2 focus:outline-none">
                                 <X className="h-3 w-3" />
                               </button>
                             </span>
                           ))}
                           <input
                             type="text"
-                            className="flex-1 p-2 border rounded-lg"
+                            className="flex-1 p-3 border rounded-lg"
                             placeholder="Add keyword"
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
@@ -294,10 +304,10 @@ const Discover = () => {
                     </div>
                   </div>
 
-                  <div className="mt-4">
+                  <div className="mt-8">
                     <button
                       type="button"
-                      className="w-full inline-flex justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+                      className="w-full inline-flex justify-center rounded-md border border-transparent bg-purple-600 px-6 py-3 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
                       onClick={toggleFilter}
                     >
                       Search
@@ -309,6 +319,11 @@ const Discover = () => {
           </div>
         </Dialog>
       </Transition>
+
+      <AdminCreateChallengePopup
+        isOpen={showCreateChallenge}
+        onClose={() => setShowCreateChallenge(false)}
+      />
     </div>
   );
 };

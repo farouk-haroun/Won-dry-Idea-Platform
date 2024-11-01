@@ -43,7 +43,7 @@ const ProfilePopup = ({ onClose }) => {
         My Profile
       </Link>
       <Link
-        to="/my-content"
+        to="/profile"
         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
         onClick={onClose}
       >
@@ -51,7 +51,7 @@ const ProfilePopup = ({ onClose }) => {
         My Content
       </Link>
       <Link
-        to="/my-drafts"
+        to="/profile"
         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
         onClick={onClose}
       >

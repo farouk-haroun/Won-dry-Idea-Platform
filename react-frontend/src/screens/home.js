@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Bell, Menu, Star, MessageCircle, Eye } from 'lucide-react';
+import { Search, Bell, Menu, Star, MessageCircle, Eye, Users, Flag, Lightbulb } from 'lucide-react';
 import ProfilePopup from '../components/ProfilePopup';
 import { useNavigate } from 'react-router-dom';
+import IdeaSpaceCard from '../components/IdeaSpaceCard';
 
 const Home = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
@@ -107,24 +108,7 @@ const Home = () => {
               "biotech",
               "space-exploration"
             ].map((topic, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-md p-4">
-                <img src={`https://images.pexels.com/photos/1148820/pexels-photo-1148820.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2`} alt="Group" className="w-full rounded-lg mb-4 h-48 object-cover" />
-                <h3 className="text-xl font-bold text-center mb-4">Wond'ry {topic.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Studio</h3>
-                <div className="flex justify-between">
-                  <div className="text-center">
-                    <p className="font-bold">521</p>
-                    <p className="text-sm">members</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-bold">521</p>
-                    <p className="text-sm">challenges</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-bold">521</p>
-                    <p className="text-sm">ideas</p>
-                  </div>
-                </div>
-              </div>
+              <IdeaSpaceCard key={index} topic={topic} />
             ))}
           </div>
         </div>

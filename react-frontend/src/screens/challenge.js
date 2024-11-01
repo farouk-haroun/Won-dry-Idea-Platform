@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Share2, Search, Bell, Menu } from 'lucide-react';
+import { ArrowLeft, Star, Share2, Search, Bell, Menu, Plus, Users, X } from 'lucide-react';
 import IdeaCard from '../components/IdeaCard';
 import ProfilePopup from '../components/ProfilePopup';
+import { Dialog, Transition } from '@headlessui/react';
 
 const Challenge = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const navigate = useNavigate();
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  const [isCreateTeamDialogOpen, setIsCreateTeamDialogOpen] = useState(false);
+  const [newTeamData, setNewTeamData] = useState({ name: '', description: '' });
+  const [teams] = useState([
+    { _id: '1', name: 'Green Innovation', description: 'Working on sustainable solutions', members: ['John', 'Jane'] },
+    { _id: '2', name: 'Tech Warriors', description: 'Technology focused solutions', members: ['Mike', 'Sarah'] },
+    { _id: '3', name: 'Future Builders', description: 'Building for tomorrow', members: ['Alex', 'Emma'] },
+  ]);
+
   // Test data
   const challenge = {
     title: "Commodore Cup 2023 Sustainability Challenge",
@@ -54,6 +64,24 @@ const Challenge = () => {
     navigate(-1);
   };
 
+  const handleJoinChallenge = () => {
+    setIsTeamDialogOpen(true);
+  };
+
+  const handleCreateTeam = (e) => {
+    e.preventDefault();
+    // Here you would typically make an API call to create the team
+    console.log('Creating team:', newTeamData);
+    setIsCreateTeamDialogOpen(false);
+    setNewTeamData({ name: '', description: '' });
+  };
+
+  const handleJoinTeam = (teamId) => {
+    // Here you would typically make an API call to join the team
+    console.log('Joining team:', teamId);
+    setIsTeamDialogOpen(false);
+  };
+
   return (
     <div className="bg-white">
       <header className="flex items-center justify-between p-4 border-b">
@@ -94,7 +122,12 @@ const Challenge = () => {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-2xl font-bold flex-grow">{challenge.title}</h1>
-          <button className="bg-purple-600 text-white px-4 py-2 rounded-md mr-2">Join Challenge</button>
+          <button 
+            className="bg-purple-600 text-white px-4 py-2 rounded-md mr-2"
+            onClick={handleJoinChallenge}
+          >
+            Join Challenge
+          </button>
           <button className="border border-gray-300 rounded-full p-2 mr-2">
             <Star className="w-5 h-5" />
           </button>
@@ -187,6 +220,155 @@ const Challenge = () => {
       <footer className="mt-8 text-center text-gray-500 text-sm pb-4">
         Wondry © 2024
       </footer>
+
+      <Transition appear show={isTeamDialogOpen} as={React.Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => setIsTeamDialogOpen(false)}>
+          <Transition.Child
+            as={React.Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={React.Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                    Join a Team
+                  </Dialog.Title>
+                  <button
+                    onClick={() => setIsTeamDialogOpen(false)}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+
+                  <div className="mt-4 space-y-4">
+                    {teams.map((team) => (
+                      <div key={team._id} className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">{team.name}</h4>
+                            <p className="text-sm text-gray-500">{team.description}</p>
+                            <div className="flex items-center mt-2 text-sm text-gray-500">
+                              <Users className="w-4 h-4 mr-1" />
+                              <span>{team.members.length} members</span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleJoinTeam(team._id)}
+                            className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm"
+                          >
+                            Join
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={() => {
+                        setIsTeamDialogOpen(false);
+                        setIsCreateTeamDialogOpen(true);
+                      }}
+                      className="w-full flex items-center justify-center space-x-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-gray-500 hover:text-gray-700 hover:border-gray-400"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span>Create New Team</span>
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      <Transition appear show={isCreateTeamDialogOpen} as={React.Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => setIsCreateTeamDialogOpen(false)}>
+          <Transition.Child
+            as={React.Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={React.Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                    Create New Team
+                  </Dialog.Title>
+                  <button
+                    onClick={() => setIsCreateTeamDialogOpen(false)}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+
+                  <form onSubmit={handleCreateTeam} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Team Name</label>
+                      <input
+                        type="text"
+                        value={newTeamData.name}
+                        onChange={(e) => setNewTeamData({ ...newTeamData, name: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Description</label>
+                      <textarea
+                        value={newTeamData.description}
+                        onChange={(e) => setNewTeamData({ ...newTeamData, description: e.target.value })}
+                        rows={3}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                        required
+                      />
+                    </div>
+                    <div className="mt-4">
+                      <button
+                        type="submit"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+                      >
+                        Create Team
+                      </button>
+                    </div>
+                  </form>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 };
