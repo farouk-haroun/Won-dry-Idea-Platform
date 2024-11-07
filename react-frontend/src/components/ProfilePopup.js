@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, User, FileText, File, Settings } from 'lucide-react';
-import axios from 'axios';
-import { API_BASE_URL } from '../utils/constants';
+
+const axios = require('axios');
+const { API_BASE_URL } =require('../utils/constants');
 
 const ProfilePopup = ({ onClose }) => {
   const navigate = useNavigate(); // This is used to navigate after logging out.
