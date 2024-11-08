@@ -11,3 +11,7 @@
  - Rate limiting.
  - Email verification.
  - Running comprehensive tests and automating them with Github Actions
+
+ # Send a request about contribution to the team, give the team options to accept or deny
+ # Admin or evaluators can determine whatever they want
+ # Score should be visible just to the team
