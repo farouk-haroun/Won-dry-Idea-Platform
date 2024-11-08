@@ -1,12 +1,25 @@
 import React from 'react';
 import { Star, MessageCircle, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const IdeaCard = ({ title, category, stage, author, comments, views, ideas, rating }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/challenge_idea');
+  };
+
   return (
-    <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
+    <div 
+      className="bg-white border rounded-lg overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+      onClick={handleClick}
+    >
       <div className="relative">
         <img src="https://images.pexels.com/photos/355952/pexels-photo-355952.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Idea" className="w-full h-[256px] object-cover" />
-        <button className="absolute top-2 right-2 bg-white rounded-full p-1 shadow w-12 h-12 flex items-center justify-center">
+        <button 
+          className="absolute top-2 right-2 bg-white rounded-full p-1 shadow w-12 h-12 flex items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Star className="text-gray-400 w-5 h-5" />
         </button>
       </div>
