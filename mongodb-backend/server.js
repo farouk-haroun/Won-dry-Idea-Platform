@@ -14,7 +14,6 @@ dotenv.config();  // Load environment variables from .env file
 
 // Initialize the Express application
 const app = express();
-
 const PORT = process.env.PORT || 5000;
 
 // Middleware to parse JSON
@@ -22,17 +21,20 @@ app.use(express.json());
 
 // CORS Configuration
 const corsOptions = {
-  origin: 'http://localhost:3000',  // Replace this with your frontend domain in production
-  credentials: true,                // Allow credentials (cookies, headers)
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',  // Replace with Render frontend domain in production
+  credentials: true,  // Allow credentials (cookies, headers)
 };
-app.use(cors(corsOptions));          // Apply the CORS middleware with options
+app.use(cors(corsOptions));  // Apply the CORS middleware with options
 
 // MongoDB connection
 const connectDB = async () => {
   const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
   const MONGO_URI = `${process.env.MONGO_URI}${dbName}`;
   try {
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     console.log('MongoDB connected successfully');
   } catch (err) {
     console.error('MongoDB connection failed:', err);
@@ -54,16 +56,14 @@ app.use('/api/users', (req, res, next) => {
 app.use('/api/teams', teamRoutes);  // Register the team routes under /api/teams
 app.use('/api/challenges', challengeRoutes);  // Register the challenge routes under /api/challenges
 
-
-// Start the server only if the file is not being imported (i.e., when running directly)
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-
-  // Connect to the database
-  connectDB();
-}
+// Connect to the database and start the server
+connectDB().then(() => {
+  if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  }
+});
 
 // Export the app for use in tests
 export default app;
