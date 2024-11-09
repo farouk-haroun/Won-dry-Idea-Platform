@@ -20,10 +20,24 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 
 // CORS Configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,         // Your production frontend URL
+  'http://localhost:3000',          // Local development
+  'http://localhost:4000'           // Another allowed origin (if needed)
+];
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',  // Set origin to frontend URL in production
+  origin: (origin, callback) => {
+    // Check if the origin is in the allowedOrigins array or if it's undefined (like in server-to-server requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,  // Allow credentials (cookies, headers)
 };
+
 app.use(cors(corsOptions));  // Apply CORS middleware
 
 // MongoDB Connection Function
