@@ -1,13 +1,12 @@
 {
   "name": "mongodb-backend",
   "version": "1.0.0",
-  "main": "server.js",
   "type": "module",
   "jest": {
     "transform": {}
   },
   "scripts": {
-    "start": "node server.js",
+    "local-start": "node api/index.js",
     "test": "vitest"
   },
   "keywords": [],
