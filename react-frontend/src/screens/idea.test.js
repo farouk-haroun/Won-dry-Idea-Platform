@@ -1,11 +1,41 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  useNavigate,
+} from 'react-router-dom';
 import Idea from './idea';
-import ProfilePopup from '../components/ProfilePopup';
 
 // Mock the ProfilePopup component
-jest.mock('../components/ProfilePopup', () => jest.fn(() => <div data-testid="profile-popup">Profile Popup</div>));
+jest.mock('../components/ProfilePopup', () => ({ onClose, onLogout }) => (
+  <div data-testid="profile-popup">
+    <button onClick={onLogout}>Logout</button>
+    <button onClick={onClose}>Close</button>
+  </div>
+));
+
+// Mock useNavigate
+jest.mock('react-router-dom', () => {
+  const originalModule = jest.requireActual('react-router-dom');
+
+  return {
+    __esModule: true,
+    ...originalModule,
+    useNavigate: jest.fn(),
+  };
+});
+
+beforeAll(() => {
+  jest.spyOn(console, 'warn').mockImplementation((message) => {
+    if (!message.includes('React Router Future Flag Warning')) {
+      console.warn(message);
+    }
+  });
+});
+
+afterAll(() => {
+  console.warn.mockRestore();
+});
 
 describe('Idea Component', () => {
   beforeEach(() => {
@@ -23,13 +53,13 @@ describe('Idea Component', () => {
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Discover')).toBeInTheDocument();
     expect(screen.getByText('Analytics')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'MM' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Profile' })).toBeInTheDocument();
     expect(screen.getByText('Wondry © 2024')).toBeInTheDocument();
   });
 
   test('navigates to login page on logout', () => {
     const navigateMock = jest.fn();
-    jest.spyOn(require('react-router-dom'), 'useNavigate').mockImplementation(() => navigateMock);
+    useNavigate.mockReturnValue(navigateMock);
 
     render(
       <Router>
@@ -37,10 +67,10 @@ describe('Idea Component', () => {
       </Router>
     );
 
-    const profileButton = screen.getByRole('button', { name: 'MM' });
+    const profileButton = screen.getByRole('button', { name: 'Profile' });
     fireEvent.click(profileButton);
 
-    const logoutButton = screen.getByText('Profile Popup');
+    const logoutButton = screen.getByText('Logout');
     fireEvent.click(logoutButton);
 
     expect(navigateMock).toHaveBeenCalledWith('/login');
@@ -53,14 +83,14 @@ describe('Idea Component', () => {
       </Router>
     );
 
-    const profileButton = screen.getByRole('button', { name: 'MM' });
-    
+    const profileButton = screen.getByRole('button', { name: 'Profile' });
+
     // Open Profile Popup
     fireEvent.click(profileButton);
     expect(screen.getByTestId('profile-popup')).toBeInTheDocument();
 
     // Close Profile Popup
-    fireEvent.click(profileButton);
+    fireEvent.click(screen.getByText('Close'));
     expect(screen.queryByTestId('profile-popup')).not.toBeInTheDocument();
   });
 

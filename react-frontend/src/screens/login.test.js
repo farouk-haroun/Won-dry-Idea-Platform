@@ -3,11 +3,16 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import store from '../store';
 import Login from './login';
+import { MemoryRouter } from 'react-router-dom';
 
 describe('Login Component', () => {
-  // Helper function to render the component with Redux provider
+  // Helper function to render the component with Redux provider and Router
   function renderWithProvider(ui) {
-    return render(<Provider store={store}>{ui}</Provider>);
+    return render(
+      <Provider store={store}>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </Provider>
+    );
   }
 
   // Test if the component renders without crashing
@@ -47,7 +52,8 @@ describe('Login Component', () => {
 
   // Test if form submission works and logs the email and password
   it('submits the form and logs the email and password', () => {
-    console.log = jest.fn(); // Mock console.log
+    // Spy on console.log
+    jest.spyOn(console, 'log').mockImplementation(() => {});
 
     renderWithProvider(<Login />);
     const emailInput = screen.getByPlaceholderText(/Email/i);
@@ -58,13 +64,19 @@ describe('Login Component', () => {
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(loginButton);
 
-    expect(console.log).toHaveBeenCalledWith('Login attempt with:', { email: 'test@example.com', password: 'password123' });
+    expect(console.log).toHaveBeenCalledWith('Login attempt with:', {
+      email: 'test@example.com',
+      password: 'password123',
+    });
+
+    // Restore console.log after the test
+    console.log.mockRestore();
   });
 
   // Test if the 'Forgot password?' link is rendered
   it('renders forgot password link', () => {
     renderWithProvider(<Login />);
-    expect(screen.getByText(/Forgot password?/i)).toBeInTheDocument();
+    expect(screen.getByText(/Forgot password\?/i)).toBeInTheDocument();
   });
 
   // Test if the 'Sign Up' link is rendered

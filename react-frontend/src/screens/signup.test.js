@@ -1,9 +1,10 @@
-// src/screens/signup.test.js
-
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import {
+  MemoryRouter,
+  useNavigate,
+} from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import Signup from './signup';
 import axios from 'axios';
@@ -11,7 +12,30 @@ import axios from 'axios';
 // Mock axios to avoid making real API requests
 jest.mock('axios');
 
+// Mock useNavigate
+jest.mock('react-router-dom', () => {
+  const originalModule = jest.requireActual('react-router-dom');
+
+  return {
+    __esModule: true,
+    ...originalModule,
+    useNavigate: jest.fn(),
+  };
+});
+
 const mockStore = configureStore([]);
+
+beforeAll(() => {
+  jest.spyOn(console, 'warn').mockImplementation((message) => {
+    if (!message.includes('React Router Future Flag Warning')) {
+      console.warn(message);
+    }
+  });
+});
+
+afterAll(() => {
+  console.warn.mockRestore();
+});
 
 describe('Signup Component', () => {
   let store;
@@ -40,7 +64,9 @@ describe('Signup Component', () => {
     expect(screen.getByLabelText(/^Confirm Password$/i)).toBeInTheDocument();
 
     // Check for the submit button
-    expect(screen.getByRole('button', { name: /Sign Up/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Sign Up/i })
+    ).toBeInTheDocument();
   });
 
   // Test if the form validates matching passwords
@@ -56,10 +82,18 @@ describe('Signup Component', () => {
     );
 
     // Fill out form fields with non-matching passwords
-    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
-    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
-    fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText(/First Name/i), {
+      target: { value: 'John' },
+    });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), {
+      target: { value: 'Doe' },
+    });
+    fireEvent.change(screen.getByLabelText(/Email/i), {
+      target: { value: 'john@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/^Password$/i), {
+      target: { value: 'password123' },
+    });
     fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
       target: { value: 'password321' },
     });
@@ -84,17 +118,29 @@ describe('Signup Component', () => {
     );
 
     // Fill out form fields with a short password
-    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
-    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
-    fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'short' } });
-    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), { target: { value: 'short' } });
+    fireEvent.change(screen.getByLabelText(/First Name/i), {
+      target: { value: 'John' },
+    });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), {
+      target: { value: 'Doe' },
+    });
+    fireEvent.change(screen.getByLabelText(/Email/i), {
+      target: { value: 'john@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/^Password$/i), {
+      target: { value: 'short' },
+    });
+    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
+      target: { value: 'short' },
+    });
 
     // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
 
     // Check that the alert is shown for short passwords
-    expect(window.alert).toHaveBeenCalledWith('Password must be at least 8 characters long');
+    expect(window.alert).toHaveBeenCalledWith(
+      'Password must be at least 8 characters long'
+    );
   });
 
   // Test if the form validates the email format
@@ -110,10 +156,18 @@ describe('Signup Component', () => {
     );
 
     // Fill out form fields with an invalid email
-    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
-    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
-    fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'invalidemail' } });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText(/First Name/i), {
+      target: { value: 'John' },
+    });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), {
+      target: { value: 'Doe' },
+    });
+    fireEvent.change(screen.getByLabelText(/Email/i), {
+      target: { value: 'invalidemail' },
+    });
+    fireEvent.change(screen.getByLabelText(/^Password$/i), {
+      target: { value: 'password123' },
+    });
     fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
       target: { value: 'password123' },
     });
@@ -122,7 +176,9 @@ describe('Signup Component', () => {
     fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
 
     // Check that the alert is shown for invalid email
-    expect(window.alert).toHaveBeenCalledWith('Please enter a valid email address');
+    expect(window.alert).toHaveBeenCalledWith(
+      'Please enter a valid email address'
+    );
   });
 
   // Test if the password visibility toggle works
@@ -158,8 +214,8 @@ describe('Signup Component', () => {
     });
 
     // Mock the navigate function
-    const navigate = jest.fn();
-    jest.spyOn(require('react-router-dom'), 'useNavigate').mockReturnValue(navigate);
+    const navigateMock = jest.fn();
+    useNavigate.mockReturnValue(navigateMock);
 
     render(
       <Provider store={store}>
@@ -170,10 +226,18 @@ describe('Signup Component', () => {
     );
 
     // Fill out form fields
-    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
-    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
-    fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText(/First Name/i), {
+      target: { value: 'John' },
+    });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), {
+      target: { value: 'Doe' },
+    });
+    fireEvent.change(screen.getByLabelText(/Email/i), {
+      target: { value: 'john@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/^Password$/i), {
+      target: { value: 'password123' },
+    });
     fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
       target: { value: 'password123' },
     });
@@ -181,14 +245,17 @@ describe('Signup Component', () => {
     // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
 
-    // Check that the axios post request is called with correct arguments
-    expect(axios.post).toHaveBeenCalledWith(`${API_BASE_URL}/users/register`, {
-      name: 'John Doe',
-      email: 'john@example.com',
-      password: 'password123',
-    });
+    // Wait for axios.post to be called
+    await expect(axios.post).toHaveBeenCalledWith(
+      `${API_BASE_URL}/users/register`,
+      {
+        name: 'John Doe',
+        email: 'john@example.com',
+        password: 'password123',
+      }
+    );
 
     // Check that navigate is called to redirect the user
-    expect(navigate).toHaveBeenCalledWith('/discover');
+    expect(navigateMock).toHaveBeenCalledWith('/discover');
   });
 });

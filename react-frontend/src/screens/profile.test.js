@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Profile from './profile';
@@ -22,13 +21,13 @@ jest.mock('../components/ProfilePopup', () => ({ onClose, onLogout }) => (
 ));
 
 // Mock ProfileSettingsPopup component
-jest.mock('../components/ProfileSettingsPopup', () => ({ isOpen, onClose }) => (
+jest.mock('../components/ProfileSettingsPopup', () => ({ isOpen, onClose }) =>
   isOpen ? (
     <div data-testid="profile-settings-popup">
       <button onClick={onClose}>Update Profile</button>
     </div>
   ) : null
-));
+);
 
 describe('Profile Component', () => {
   const mockChallenges = [
@@ -109,6 +108,7 @@ describe('Profile Component', () => {
     const searchInput = screen.getByPlaceholderText('Search your content...');
     fireEvent.change(searchInput, { target: { value: 'Challenge' } });
 
+    // Wait for the challenges to be displayed
     await waitFor(() => {
       expect(screen.getByText('Challenge 1')).toBeInTheDocument();
       expect(screen.getByText('Challenge 2')).toBeInTheDocument();
