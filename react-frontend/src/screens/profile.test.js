@@ -1,10 +1,34 @@
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Profile from './profile';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/constants';
 
 jest.mock('axios');
+
+// Mock ChallengeCard component
+jest.mock('../components/ChallengeCard', () => ({ challenge }) => (
+  <div data-testid="challenge-card">{challenge.title}</div>
+));
+
+// Mock ProfilePopup component
+jest.mock('../components/ProfilePopup', () => ({ onClose, onLogout }) => (
+  <div data-testid="profile-popup">
+    <button onClick={onLogout}>Logout</button>
+    <button onClick={onClose}>Close</button>
+  </div>
+));
+
+// Mock ProfileSettingsPopup component
+jest.mock('../components/ProfileSettingsPopup', () => ({ isOpen, onClose }) => (
+  isOpen ? (
+    <div data-testid="profile-settings-popup">
+      <button onClick={onClose}>Update Profile</button>
+    </div>
+  ) : null
+));
 
 describe('Profile Component', () => {
   const mockChallenges = [
@@ -33,7 +57,10 @@ describe('Profile Component', () => {
   test('fetches and displays challenges on mount', async () => {
     render(<Profile />, { wrapper: MemoryRouter });
 
-    await waitFor(() => expect(axios.get).toHaveBeenCalledWith(`${API_BASE_URL}/challenges/user-challenges`));
+    await waitFor(() =>
+      expect(axios.get).toHaveBeenCalledWith(`${API_BASE_URL}/challenges/user-challenges`)
+    );
+
     expect(screen.getByText('Challenge 1')).toBeInTheDocument();
     expect(screen.getByText('Challenge 2')).toBeInTheDocument();
   });
@@ -44,7 +71,7 @@ describe('Profile Component', () => {
 
     render(<Profile />, { wrapper: MemoryRouter });
 
-    fireEvent.click(screen.getByText('MM'));
+    fireEvent.click(screen.getByTestId('profile-avatar'));
     fireEvent.click(screen.getByText('Logout'));
 
     expect(navigate).toHaveBeenCalledWith('/login');
@@ -53,9 +80,10 @@ describe('Profile Component', () => {
   test('shows profile popup on avatar click', () => {
     render(<Profile />, { wrapper: MemoryRouter });
 
-    const avatar = screen.getByText('MM');
+    const avatar = screen.getByTestId('profile-avatar');
     fireEvent.click(avatar);
 
+    expect(screen.getByTestId('profile-popup')).toBeInTheDocument();
     expect(screen.getByText('Logout')).toBeInTheDocument();
   });
 
@@ -72,19 +100,21 @@ describe('Profile Component', () => {
     render(<Profile />, { wrapper: MemoryRouter });
 
     fireEvent.click(screen.getByText('Edit Profile'));
-    expect(screen.getByText('Update Profile')).toBeInTheDocument();
+    expect(screen.getByTestId('profile-settings-popup')).toBeInTheDocument();
   });
 
-  test('filters and sorts challenges', () => {
+  test('filters and sorts challenges', async () => {
     render(<Profile />, { wrapper: MemoryRouter });
 
     const searchInput = screen.getByPlaceholderText('Search your content...');
     fireEvent.change(searchInput, { target: { value: 'Challenge' } });
 
-    expect(screen.getByText('Challenge 1')).toBeInTheDocument();
-    expect(screen.getByText('Challenge 2')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Challenge 1')).toBeInTheDocument();
+      expect(screen.getByText('Challenge 2')).toBeInTheDocument();
+    });
 
-    const sortSelect = screen.getByDisplayValue('Sort by: Recent');
+    const sortSelect = screen.getByTestId('sort-select');
     fireEvent.change(sortSelect, { target: { value: 'Sort by: Popular' } });
 
     expect(sortSelect.value).toBe('Sort by: Popular');
@@ -95,6 +125,7 @@ describe('Profile Component', () => {
 
     render(<Profile />, { wrapper: MemoryRouter });
 
-    await waitFor(() => expect(screen.getByText('No challenges found')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('no-challenges-message')).toBeInTheDocument());
+    expect(screen.getByText('No challenges found.')).toBeInTheDocument();
   });
 });

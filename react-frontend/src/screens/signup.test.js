@@ -1,3 +1,5 @@
+// src/screens/signup.test.js
+
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
@@ -16,7 +18,7 @@ describe('Signup Component', () => {
 
   beforeEach(() => {
     store = mockStore({
-      auth: { user: null }
+      auth: { user: null },
     });
   });
 
@@ -34,8 +36,8 @@ describe('Signup Component', () => {
     expect(screen.getByLabelText(/First Name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Last Name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Confirm Password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Confirm Password$/i)).toBeInTheDocument();
 
     // Check for the submit button
     expect(screen.getByRole('button', { name: /Sign Up/i })).toBeInTheDocument();
@@ -57,8 +59,10 @@ describe('Signup Component', () => {
     fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
     fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
     fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByLabelText(/Confirm Password/i), { target: { value: 'password321' } });
+    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
+      target: { value: 'password321' },
+    });
 
     // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
@@ -83,14 +87,14 @@ describe('Signup Component', () => {
     fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
     fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
     fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'short' } });
-    fireEvent.change(screen.getByLabelText(/Confirm Password/i), { target: { value: 'short' } });
+    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'short' } });
+    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), { target: { value: 'short' } });
 
     // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
 
     // Check that the alert is shown for short passwords
-    expect(window.alert).toHaveBeenCalledWith("Password must be at least 8 characters long");
+    expect(window.alert).toHaveBeenCalledWith('Password must be at least 8 characters long');
   });
 
   // Test if the form validates the email format
@@ -109,14 +113,16 @@ describe('Signup Component', () => {
     fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
     fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
     fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'invalidemail' } });
-    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByLabelText(/Confirm Password/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
+      target: { value: 'password123' },
+    });
 
     // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
 
     // Check that the alert is shown for invalid email
-    expect(window.alert).toHaveBeenCalledWith("Please enter a valid email address");
+    expect(window.alert).toHaveBeenCalledWith('Please enter a valid email address');
   });
 
   // Test if the password visibility toggle works
@@ -129,13 +135,14 @@ describe('Signup Component', () => {
       </Provider>
     );
 
-    const passwordInput = screen.getByLabelText(/Password/i);
+    const passwordInput = screen.getByLabelText(/^Password$/i);
 
     // Password field should be hidden initially
     expect(passwordInput.type).toBe('password');
 
     // Click the toggle button
-    fireEvent.click(screen.getByRole('button', { name: /Show password/i }));
+    const toggleButton = screen.getByLabelText(/Show password/i);
+    fireEvent.click(toggleButton);
 
     // Password field should be visible
     expect(passwordInput.type).toBe('text');
@@ -146,9 +153,13 @@ describe('Signup Component', () => {
     // Mock the API response for successful signup
     axios.post.mockResolvedValue({
       data: {
-        user: { id: 1, name: 'John Doe', email: 'john@example.com' }
-      }
+        user: { id: 1, name: 'John Doe', email: 'john@example.com' },
+      },
     });
+
+    // Mock the navigate function
+    const navigate = jest.fn();
+    jest.spyOn(require('react-router-dom'), 'useNavigate').mockReturnValue(navigate);
 
     render(
       <Provider store={store}>
@@ -162,17 +173,22 @@ describe('Signup Component', () => {
     fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
     fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
     fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByLabelText(/Confirm Password/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
+      target: { value: 'password123' },
+    });
 
     // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
 
     // Check that the axios post request is called with correct arguments
-    expect(axios.post).toHaveBeenCalledWith(`${process.env.REACT_APP_API_BASE_URL}/users/register`, {
+    expect(axios.post).toHaveBeenCalledWith(`${API_BASE_URL}/users/register`, {
       name: 'John Doe',
       email: 'john@example.com',
-      password: 'password123'
+      password: 'password123',
     });
+
+    // Check that navigate is called to redirect the user
+    expect(navigate).toHaveBeenCalledWith('/discover');
   });
 });

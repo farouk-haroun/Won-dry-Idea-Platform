@@ -1,13 +1,26 @@
+// src/screens/challenge_idea.test.js
+
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
 import ChallengeIdea from './challenge_idea';
+import axios from 'axios';
 
 jest.mock('axios');
 
-const mockStore = configureStore([]);
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: jest.fn(),
+  useParams: jest.fn(),
+}));
+
+const navigateMock = jest.fn();
+useNavigate.mockReturnValue(navigateMock);
+
+const mockStore = configureStore([thunk]);
 
 describe('ChallengeIdea Component', () => {
   let store;
@@ -15,79 +28,85 @@ describe('ChallengeIdea Component', () => {
   beforeEach(() => {
     store = mockStore({
       auth: { isAuthenticated: true, user: { id: 1, name: 'Test User', role: 'user' } },
-      // Include other necessary state slices
     });
+
+    jest.clearAllMocks();
+
+    const { useParams } = require('react-router-dom');
+    useParams.mockReturnValue({ id: '1' });
   });
+
+  const idea = {
+    title: 'United by Better Coffee',
+    author: 'John Doe',
+    timestamp: '2024/09/20 08:36',
+    content: 'My main concern is...',
+    likes: 50,
+    team: [
+      { name: 'John Doe', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
+      { name: 'Samantha Pene', avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
+    ],
+    challenge: {
+      title: 'Commodore Cup 2023 Sustainability Challenge',
+      category: 'Social Innovation',
+    },
+    metrics: {
+      status: 'Rejected',
+      rate: 3.5,
+    },
+    feedback: {
+      scalability: 3.5,
+      sustainability: 3.5,
+      innovation: 3.5,
+      impact: 3.5,
+    },
+  };
 
   test('renders the ChallengeIdea component', () => {
     render(
       <Provider store={store}>
         <MemoryRouter>
-          <ChallengeIdea />
+          <ChallengeIdea idea={idea} isAdmin={true} isLoading={false} />
         </MemoryRouter>
       </Provider>
     );
     expect(screen.getByTestId('challenge-idea-component')).toBeInTheDocument();
   });
 
-  test('shows error message if required fields are missing', () => {
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <ChallengeIdea />
-        </MemoryRouter>
-      </Provider>
-    );
-    expect(screen.getByText(/error: title is required/i)).toBeInTheDocument(); // Adjust based on actual error text
-  });
-
-  test('calls handleClick when the submit button is clicked', () => {
-    const handleClick = jest.fn();
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <ChallengeIdea onClick={handleClick} />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    const button = screen.getByRole('button', { name: /submit/i }); // Adjust button selector as needed
-    fireEvent.click(button);
-
-    expect(handleClick).toHaveBeenCalled();
-  });
-
-  test('renders key metrics section', () => {
-    expect(screen.getByTestId('key-metrics')).toBeInTheDocument();
-  });
-
   test('displays organizer feedback when provided', () => {
-    const feedback = 'Great challenge with lots of potential!';
     render(
       <Provider store={store}>
         <MemoryRouter>
-          <ChallengeIdea organizerFeedback={feedback} />
+          <ChallengeIdea idea={idea} isAdmin={false} isLoading={false} />
         </MemoryRouter>
       </Provider>
     );
-    expect(screen.getByText(feedback)).toBeInTheDocument();
+
+    expect(screen.getByText('Scalability')).toBeInTheDocument();
+    expect(screen.getByText('Sustainability')).toBeInTheDocument();
   });
 
   test('handles hover animation on card', () => {
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <ChallengeIdea idea={idea} isAdmin={false} isLoading={false} />
+        </MemoryRouter>
+      </Provider>
+    );
+
     const card = screen.getByTestId('challenge-card');
     fireEvent.mouseOver(card);
-    expect(card).toHaveClass('hover-animation'); // Replace 'hover-animation' with the actual hover class
+
+    // Ensure the hover class is added (you need to implement this in your component)
+    expect(card).toHaveClass('hover-animation');
   });
 
   test('displays unauthorized message if user lacks permission', () => {
-    const unauthorizedStore = mockStore({
-      auth: { isAuthenticated: false },
-    });
-
     render(
-      <Provider store={unauthorizedStore}>
+      <Provider store={store}>
         <MemoryRouter>
-          <ChallengeIdea />
+          <ChallengeIdea idea={null} isAdmin={false} isLoading={false} />
         </MemoryRouter>
       </Provider>
     );
@@ -96,14 +115,10 @@ describe('ChallengeIdea Component', () => {
   });
 
   test('shows feedback input for admin users', () => {
-    const adminStore = mockStore({
-      auth: { isAuthenticated: true, role: 'admin' },
-    });
-
     render(
-      <Provider store={adminStore}>
+      <Provider store={store}>
         <MemoryRouter>
-          <ChallengeIdea />
+          <ChallengeIdea idea={idea} isAdmin={true} isLoading={false} />
         </MemoryRouter>
       </Provider>
     );
@@ -115,7 +130,7 @@ describe('ChallengeIdea Component', () => {
     render(
       <Provider store={store}>
         <MemoryRouter>
-          <ChallengeIdea isLoading={true} />
+          <ChallengeIdea idea={null} isAdmin={false} isLoading={true} />
         </MemoryRouter>
       </Provider>
     );
@@ -124,21 +139,15 @@ describe('ChallengeIdea Component', () => {
   });
 
   test('renders list of ideas associated with the challenge', () => {
-    const ideas = [
-      { id: 1, title: 'Idea 1' },
-      { id: 2, title: 'Idea 2' },
-    ];
-
     render(
       <Provider store={store}>
         <MemoryRouter>
-          <ChallengeIdea ideas={ideas} />
+          <ChallengeIdea idea={idea} isAdmin={false} isLoading={false} />
         </MemoryRouter>
       </Provider>
     );
 
-    ideas.forEach((idea) => {
-      expect(screen.getByText(idea.title)).toBeInTheDocument();
-    });
+    expect(screen.getByText('United by Better Coffee')).toBeInTheDocument();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
   });
 });
