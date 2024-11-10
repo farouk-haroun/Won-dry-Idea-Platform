@@ -84,20 +84,25 @@ export const addSubmission = async (req, res) => {
 
 
 export const deleteChallenge = async (req, res) => {
-  const { id } = req.params; // Get the challenge ID from the request parameters
+  const { id } = req.params;
 
   try {
     // Find the challenge by ID
     const challenge = await Challenge.findById(id);
 
-    // If challenge does not exist, return a 404 error
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
     }
 
     // If there is a thumbnail, delete it from the filesystem
     if (challenge.thumbnailUrl) {
-      const thumbnailPath = path.join(process.cwd(), challenge.thumbnailUrl);
+      // Remove the base URL from the thumbnail URL if present
+      const relativeThumbnailPath = challenge.thumbnailUrl.replace(BASE_URL, '');
+      
+      // Get the absolute path on the server
+      const thumbnailPath = path.join(process.cwd(), relativeThumbnailPath);
+
+      // Delete the file from the filesystem
       fs.unlink(thumbnailPath, (err) => {
         if (err) {
           console.error('Failed to delete thumbnail:', err);
@@ -116,3 +121,24 @@ export const deleteChallenge = async (req, res) => {
   }
 };
 //create a challenge, delete a challenge, join a challenge, search a challenge
+
+export const incrementViewCount = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the challenge by ID and increment the viewCounts field
+    const updatedChallenge = await Challenge.findByIdAndUpdate(
+      id,
+      { $inc: { viewCounts: 1 } },  // $inc operator to increment viewCounts by 1
+      { new: true }  // Return the updated document
+    );
+
+    if (!updatedChallenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+
+    res.status(200).json(updatedChallenge);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
