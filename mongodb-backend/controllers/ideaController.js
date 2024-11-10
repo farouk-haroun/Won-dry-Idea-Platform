@@ -1,11 +1,74 @@
 // controllers/ideaController.js
 import Idea from '../models/ideaModel.js';  
 
-// Get all ideas
-// Get all ideas
+// Get all ideas with average feedbacks
 export const getAllIdeas = async (req, res) => {
   try {
-    const ideas = await Idea.find().populate('createdBy team challenge');
+    const ideas = await Idea.aggregate([
+      // Lookup for 'createdBy' field
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'createdBy'
+        }
+      },
+      {
+        $unwind: '$createdBy'
+      },
+      
+      // Unwind 'feedbacks' array for aggregation
+      {
+        $unwind: {
+          path: '$feedbacks',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      // Group by idea to calculate averages
+      {
+        $group: {
+          _id: '$_id',
+          title: { $first: '$title' },
+          description: { $first: '$description' },
+          createdBy: { $first: '$createdBy' },
+          team: { $first: '$team' },
+          challenge: { $first: '$challenge' },
+          comments: { $first: '$comments' },
+          feedbacks: { $push: '$feedbacks' },
+          status: { $first: '$status' },
+          votes: { $first: '$votes' },
+          createdAt: { $first: '$createdAt' },
+          avgScalability: { $avg: '$feedbacks.scalability' },
+          avgSustainability: { $avg: '$feedbacks.sustainability' },
+          avgInnovation: { $avg: '$feedbacks.innovation' },
+          avgImpact: { $avg: '$feedbacks.impact' }
+        }
+      },
+      // Project the final output
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          description: 1,
+          createdBy: 1,
+          team: 1,
+          challenge: 1,
+          comments: 1,
+          feedbacks: 1,
+          status: 1,
+          votes: 1,
+          createdAt: 1,
+          averageFeedback: {
+            scalability: '$avgScalability',
+            sustainability: '$avgSustainability',
+            innovation: '$avgInnovation',
+            impact: '$avgImpact'
+          }
+        }
+      }
+    ]);
+
     res.status(200).json(ideas);
   } catch (error) {
     res.status(500).json({ message: error.message });
