@@ -19,7 +19,7 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
 
   const categories = [
     'SUSTAINABILITY',
-    'SOCIAL_INNOVATION',
+    'SOCIAL INNOVATION',
     'TECHNOLOGY',
     'HEALTHCARE',
     'EDUCATION'
