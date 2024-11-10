@@ -17,40 +17,43 @@ const Idea = () => {
         <Link to="/">
           <img src="/main_logo.svg" alt="Wondry Logo" className="h-8" />
         </Link>
-        
+
         <nav className="hidden md:flex space-x-6">
-          <Link to="/" className="text-gray-700">Home</Link>
-          <Link to="/discover" className="text-gray-700">Discover</Link>
-          <Link to="/analytics" className="text-gray-700">Analytics</Link>
+          <Link to="/" className="text-gray-700">
+            Home
+          </Link>
+          <Link to="/discover" className="text-gray-700">
+            Discover
+          </Link>
         </nav>
-        
+
         <div className="flex items-center space-x-4">
           <Search className="text-gray-500 cursor-pointer" />
           <Bell className="text-gray-500 cursor-pointer" />
           <Menu className="text-gray-500 md:hidden cursor-pointer" />
           <div className="relative">
-            <div 
+            <div
+              role="button"
+              aria-label="Profile"
               className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white cursor-pointer"
               onClick={() => setShowProfilePopup(!showProfilePopup)}
             >
               MM
             </div>
             {showProfilePopup && (
-              <ProfilePopup 
-                onClose={() => setShowProfilePopup(false)}
-                onLogout={handleLogout}
-              />
+              <ProfilePopup onClose={() => setShowProfilePopup(false)} onLogout={handleLogout} />
             )}
           </div>
         </div>
       </header>
 
       <div className="flex-1">
-        <iframe 
-          src="https://miro.com/app/live-embed/uXjVLagsR90=/?moveToViewport=-1784,-1392,7151,3705&embedId=140779962039" 
-          frameBorder="0" 
-          scrolling="no" 
-          allow="fullscreen; clipboard-read; clipboard-write" 
+        <iframe
+          title="Embedded Miro Board"
+          src="https://miro.com/app/live-embed/uXjVLagsR90=/?moveToViewport=-1784,-1392,7151,3705&embedId=140779962039"
+          frameBorder="0"
+          scrolling="no"
+          allow="fullscreen; clipboard-read; clipboard-write"
           allowFullScreen
           className="w-full h-full"
         />
