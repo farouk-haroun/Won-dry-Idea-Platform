@@ -3,7 +3,8 @@ import express from 'express';
 import {getAllChallenges, 
     createChallenge, 
     addSubmission,
-searchChallenges} from '../controllers/challengeController.js';
+searchChallenges,
+deleteChallenge} from '../controllers/challengeController.js';
 const router = express.Router();
 
 // Route to create a challenge with file uploads
