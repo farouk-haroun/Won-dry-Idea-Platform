@@ -1,56 +1,65 @@
-import express from 'express';  // Import Express
-import mongoose from 'mongoose';  // Import Mongoose
-import dotenv from 'dotenv';  // Import dotenv for environment variables
-import cors from 'cors';  // Import CORS middleware
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Importing routes
-import ideaRoutes from './routes/ideaRoute.js';  // Import ideaRoute
-import userRoutes from './routes/userRoute.js';  // Import userRoute
-import teamRoutes from './routes/teamRoute.js';  // Import teamRoute
-import challengeRoutes from './routes/challengeRoute.js';  // Import challengeRoute
+// Define __dirname in ES module scope
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import ideaSpaceRoutes from './routes/ideaSpaceRoute.js';  // Import ideaSpaceRoute
 
 // Load environment variables from .env file
-dotenv.config();  
+dotenv.config();
 
 // Initialize the Express application
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Import routes
+import ideaRoutes from './routes/ideaRoute.js';
+import userRoutes from './routes/userRoute.js';
+import teamRoutes from './routes/teamRoute.js';
+import challengeRoutes from './routes/challengeRoute.js';
 
 // Middleware to parse JSON
 app.use(express.json());
 
 // CORS Configuration
 const allowedOrigins = [
-  process.env.FRONTEND_URL,         // Your production frontend URL
-  'http://localhost:3000',          // Local development
-  'http://localhost:4000'           // Another allowed origin (if needed)
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'http://localhost:4000'
 ];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Check if the origin is in the allowedOrigins array or if it's undefined (like in server-to-server requests)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true,  // Allow credentials (cookies, headers)
+  credentials: true,
 };
 
-app.use(cors(corsOptions));  // Apply CORS middleware
+app.use(cors(corsOptions));
 
-// MongoDB Connection Function
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// MongoDB Connection and GridFS Setup
 const connectDB = async () => {
   const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
   const MONGO_URI = `${process.env.MONGO_URI}${dbName}`;
+
   try {
-    await mongoose.connect(MONGO_URI);  // Connect to MongoDB (options are now default)
+    await mongoose.connect(MONGO_URI);
     console.log('MongoDB connected successfully');
   } catch (err) {
     console.error('MongoDB connection failed:', err);
-    process.exit(1);  // Exit process with failure
+    process.exit(1); // Exit process with failure
   }
 };
 
@@ -79,4 +88,5 @@ connectDB().then(() => {
 });
 
 // Export the app for use in tests
+export { app };
 export default app;

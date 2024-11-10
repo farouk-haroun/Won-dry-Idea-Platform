@@ -1,4 +1,6 @@
 // controllers/challengeController.js
+import { upload} from '../middleware/upload.js'; // Adjust path if in `middleware/upload.js`
+
 import Challenge from '../models/challengeModel.js';
 
 // Get all challenges
@@ -11,17 +13,34 @@ export const getAllChallenges = async (req, res) => {
   }
 };
 
-// Create a new challenge
-export const createChallenge = async (req, res) => {
-  try {
-    const newChallenge = new Challenge(req.body);
-    const savedChallenge = await newChallenge.save();
-    res.status(201).json(savedChallenge);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
+// Create a new challenge with file upload
+export const createChallenge = [
+  upload.single('thumbnail'),  // Only accept a single file named `thumbnail`
+  async (req, res) => {
+    try {
+      const { title, description, stages, status } = req.body;
+      const parsedStages = stages ? JSON.parse(stages) : [];
+      const organizerId = req.user?.id; // Replace with actual user ID
 
+      // Construct the thumbnail URL or path
+      const thumbnailUrl = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
+
+      const newChallenge = new Challenge({
+        title,
+        description,
+        stages: parsedStages,
+        organizers: [organizerId],
+        thumbnailUrl,
+        status,
+      });
+
+      const savedChallenge = await newChallenge.save();
+      res.status(201).json(savedChallenge);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  },
+];
 // Add submission to a challenge stage
 export const addSubmission = async (req, res) => {
   const { challengeId, stageId } = req.params;
@@ -37,4 +56,4 @@ export const addSubmission = async (req, res) => {
   }
 };
 
-//create a challenge, delete a challenge, join a challenge, 
+//create a challenge, delete a challenge, join a challenge, search a challenge
