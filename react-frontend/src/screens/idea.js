@@ -25,12 +25,6 @@ const Idea = () => {
           <Link to="/discover" className="text-gray-700">
             Discover
           </Link>
-<<<<<<< HEAD
-          <Link to="/analytics" className="text-gray-700">
-            Analytics
-          </Link>
-=======
->>>>>>> 521bdace01a01031a32efe0d31d4931b49ec0fff
         </nav>
 
         <div className="flex items-center space-x-4">
