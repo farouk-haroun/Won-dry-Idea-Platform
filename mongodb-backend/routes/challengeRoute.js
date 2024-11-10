@@ -11,5 +11,6 @@ router.post('/challenges', createChallenge);
 router.get('/challenges', getAllChallenges);
 router.post('/challenges', createChallenge);
 router.post('/challenges/:challengeId/stages/:stageId/submissions', addSubmission);
+router.get('/search', searchChallenges);
 
 export default router;
