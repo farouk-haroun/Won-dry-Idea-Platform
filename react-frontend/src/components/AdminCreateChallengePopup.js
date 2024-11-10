@@ -61,25 +61,26 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
         if (key === 'stages' || key === 'organizers') {
           formDataToSend.append(key, JSON.stringify(formData[key]));
         } else if (key === 'thumbnail' && formData[key]) {
-          formDataToSend.append('thumbnail', formData[key]);
+          formDataToSend.append('thumbnail', formData[key]);  // Append the thumbnail file
         } else {
           formDataToSend.append(key, formData[key]);
         }
       });
-
-      const response = await axios.post(`${API_BASE_URL}/challenges/challenges`, formDataToSend, {
+  
+      const response = await axios.post(`${API_BASE_URL}/challenges`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-
+  
       if (response.status === 201) {
-        onClose();
+        onClose();  // Close popup if creation is successful
       }
     } catch (error) {
       console.error('Error creating challenge:', error);
     }
   };
+  
 
   if (!isOpen) return null;
 
@@ -198,7 +199,7 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
           <div className="w-80">
             <h3 className="text-gray-700 font-medium mb-4">Preview</h3>
             <div className="sticky top-8">
-              <PreviewCard />
+              {/* <PreviewCard /> */}
               <div className="mt-4">
                 <label className="block text-gray-700 mb-2">Thumbnail:</label>
                 <div className="border-2 border-dashed rounded-lg p-4">
