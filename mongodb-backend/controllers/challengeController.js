@@ -1,4 +1,6 @@
 // controllers/challengeController.js
+import { upload} from '../middleware/upload.js'; // Adjust path if in `middleware/upload.js`
+
 import Challenge from '../models/challengeModel.js';
 
 // Get all challenges
@@ -11,14 +13,53 @@ export const getAllChallenges = async (req, res) => {
   }
 };
 
-// Create a new challenge
-export const createChallenge = async (req, res) => {
+// Create a new challenge with file upload
+export const createChallenge = [
+  upload.single('thumbnail'),  // Only accept a single file named `thumbnail`
+  async (req, res) => {
+    try {
+      const { title, description, stages, status, category } = req.body;  // Extract category from req.body
+      const parsedStages = stages ? JSON.parse(stages) : [];
+      const organizerId = req.user?.id; // Replace with actual user ID
+
+      // Construct the thumbnail URL or path
+      const thumbnailUrl = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
+
+      // Create a new Challenge with category
+      const newChallenge = new Challenge({
+        title,
+        description,
+        stages: parsedStages,
+        organizers: [organizerId],
+        thumbnailUrl,
+        status,
+        category, // Add category to the challenge object
+      });
+
+      const savedChallenge = await newChallenge.save();
+      res.status(201).json(savedChallenge);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  },
+];
+// Search for challenges by title
+export const searchChallenges = async (req, res) => {
   try {
-    const newChallenge = new Challenge(req.body);
-    const savedChallenge = await newChallenge.save();
-    res.status(201).json(savedChallenge);
+    const { title } = req.query;
+
+    if (!title) {
+      return res.status(400).json({ message: 'Title query parameter is required' });
+    }
+
+    // Case-insensitive search using regular expressions
+    const challenges = await Challenge.find({
+      title: { $regex: title, $options: 'i' } // 'i' for case-insensitive search
+    }).populate('organizers stages.submissions');
+
+    res.status(200).json(challenges);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 

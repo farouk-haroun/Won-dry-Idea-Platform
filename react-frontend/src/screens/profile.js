@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, Menu, Filter, Star, Share2, Edit2, Settings } from 'lucide-react';
+import { Search, Bell, Menu, Filter, Edit2, Settings } from 'lucide-react';
 import ProfilePopup from '../components/ProfilePopup';
 import ChallengeCard from '../components/ChallengeCard';
 import ProfileSettingsPopup from '../components/ProfileSettingsPopup';
@@ -17,7 +17,7 @@ const Profile = () => {
     points: 0,
     role: 'Student',
     department: 'Computer Science',
-    joinedDate: 'January 2024'
+    joinedDate: 'January 2024',
   });
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const navigate = useNavigate();
@@ -40,9 +40,9 @@ const Profile = () => {
   };
 
   const handleProfileUpdate = (updatedProfile) => {
-    setUserProfile(prev => ({
+    setUserProfile((prev) => ({
       ...prev,
-      ...updatedProfile
+      ...updatedProfile,
     }));
   };
 
@@ -55,9 +55,12 @@ const Profile = () => {
             <img src="/main_logo.svg" alt="Wondry Logo" className="h-12 mr-4" />
           </Link>
           <nav className="hidden md:flex space-x-6">
-            <Link to="/" className="text-[#2c2c2c] text-xl">Home</Link>
-            <Link to="/discover" className="text-[#2c2c2c] text-xl">Discover</Link>
-            <Link to="/analytics" className="text-[#2c2c2c] text-xl">Analytics</Link>
+            <Link to="/" className="text-[#2c2c2c] text-xl">
+              Home
+            </Link>
+            <Link to="/discover" className="text-[#2c2c2c] text-xl">
+              Discover
+            </Link>
           </nav>
         </div>
         <div className="flex items-center space-x-4">
@@ -65,17 +68,15 @@ const Profile = () => {
           <Bell className="text-gray-500 cursor-pointer" />
           <Menu className="text-gray-500 md:hidden cursor-pointer" />
           <div className="relative">
-            <div 
+            <div
+              data-testid="profile-avatar"
               className="w-14 h-14 bg-[#2c2c2c] rounded-full flex items-center justify-center text-white text-xl cursor-pointer"
               onClick={() => setShowProfilePopup(!showProfilePopup)}
             >
               MM
             </div>
             {showProfilePopup && (
-              <ProfilePopup 
-                onClose={() => setShowProfilePopup(false)}
-                onLogout={handleLogout}
-              />
+              <ProfilePopup onClose={() => setShowProfilePopup(false)} onLogout={handleLogout} />
             )}
           </div>
         </div>
@@ -95,7 +96,7 @@ const Profile = () => {
                   <p className="text-gray-600">{userProfile.email}</p>
                 </div>
                 <div className="flex space-x-4">
-                  <button 
+                  <button
                     className="flex items-center space-x-2 px-4 py-2 border rounded-full hover:bg-gray-50"
                     onClick={() => setShowProfileSettings(true)}
                   >
@@ -142,25 +143,33 @@ const Profile = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex space-x-6 border-b">
           <button
-            className={`px-4 py-2 ${activeTab === 'Challenges' ? 'border-b-2 border-[#874c9e] text-[#874c9e]' : 'text-gray-600'}`}
+            className={`px-4 py-2 ${
+              activeTab === 'Challenges' ? 'border-b-2 border-[#874c9e] text-[#874c9e]' : 'text-gray-600'
+            }`}
             onClick={() => setActiveTab('Challenges')}
           >
             My Challenges
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === 'Ideas' ? 'border-b-2 border-[#874c9e] text-[#874c9e]' : 'text-gray-600'}`}
+            className={`px-4 py-2 ${
+              activeTab === 'Ideas' ? 'border-b-2 border-[#874c9e] text-[#874c9e]' : 'text-gray-600'
+            }`}
             onClick={() => setActiveTab('Ideas')}
           >
             My Ideas
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === 'Drafts' ? 'border-b-2 border-[#874c9e] text-[#874c9e]' : 'text-gray-600'}`}
+            className={`px-4 py-2 ${
+              activeTab === 'Drafts' ? 'border-b-2 border-[#874c9e] text-[#874c9e]' : 'text-gray-600'
+            }`}
             onClick={() => setActiveTab('Drafts')}
           >
             Drafts
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === 'Favorites' ? 'border-b-2 border-[#874c9e] text-[#874c9e]' : 'text-gray-600'}`}
+            className={`px-4 py-2 ${
+              activeTab === 'Favorites' ? 'border-b-2 border-[#874c9e] text-[#874c9e]' : 'text-gray-600'
+            }`}
             onClick={() => setActiveTab('Favorites')}
           >
             Favorites
@@ -179,7 +188,7 @@ const Profile = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             </div>
             <div className="flex items-center space-x-4">
-              <select className="border rounded-lg px-4 py-2">
+              <select className="border rounded-lg px-4 py-2" data-testid="sort-select">
                 <option>Sort by: Recent</option>
                 <option>Sort by: Popular</option>
                 <option>Sort by: Title</option>
@@ -191,14 +200,15 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {challenges.map((challenge) => (
-              <ChallengeCard
-                key={challenge._id}
-                challenge={challenge}
-              />
-            ))}
-          </div>
+          {challenges.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {challenges.map((challenge) => (
+                <ChallengeCard key={challenge._id} challenge={challenge} />
+              ))}
+            </div>
+          ) : (
+            <p data-testid="no-challenges-message">No challenges found.</p>
+          )}
         </div>
       </div>
 

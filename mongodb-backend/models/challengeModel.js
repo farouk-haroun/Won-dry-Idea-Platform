@@ -12,11 +12,16 @@ const challengeSchema = new mongoose.Schema({
     },
   ],
   organizers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  attachedFiles: [{ type: String }], // URLs to attached files like guidebooks
   createdAt: { type: Date, default: Date.now },
-  status: { type: String, enum: ['open', 'closed'], default: 'open' },
-  thumbnailUrl: { type: String },
+  status: { type: String, enum: ['open', 'closed', 'DRAFT'], default: 'open' },
+  thumbnailUrl: { type: String },  // Use a string to store the file path or URL
+  category: {
+    type: String,
+    enum: ['SUSTAINABILITY', 'SOCIAL INNOVATION', 'TECHNOLOGY', 'HEALTHCARE', 'EDUCATION'],
+    required: true,
+  },
 });
 
 const Challenge = mongoose.model('Challenge', challengeSchema);
 export default Challenge;
+
