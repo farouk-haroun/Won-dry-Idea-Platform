@@ -46,7 +46,13 @@ export const submitFeedback = async (req, res) => {
     const idea = await Idea.findById(ideaId);
     if (!idea) return res.status(404).json({ message: 'Idea not found' });
 
-    idea.feedback = req.body.feedback;
+    const feedbackEntry = {
+      ...req.body, // Contains scalability, sustainability, etc.
+      createdBy: req.user.id, // Ensure req.user.id is available through authentication middleware
+      createdAt: new Date(),
+    };
+
+    idea.feedbacks.push(feedbackEntry);
     await idea.save();
     res.status(200).json(idea);
   } catch (error) {
