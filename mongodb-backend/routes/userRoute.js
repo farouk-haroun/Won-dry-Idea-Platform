@@ -20,7 +20,6 @@ const router = express.Router();
 
 // Authentication routes
 router.post('/register', (req, res, next) => {
-  console.log('Register route matched');
   next();
 }, registerUser); // Register a new user
 

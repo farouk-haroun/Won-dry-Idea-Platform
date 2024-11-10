@@ -41,21 +41,30 @@ function Signup() {
     }
 
     try {
-      // Make API call to register the user
       const response = await axios.post(`${API_BASE_URL}/users/register`, {
         name: `${firstName} ${lastName}`,
         email,
-        password
+        password,
       });
-
-      // If registration is successful, log the user in
-      dispatch(login(response.data.user));
-
-      // Redirect to discover page
-      navigate('/discover');
-    } catch (error) {
-      console.error('Signup error:', error);
-      alert('Signup failed. Please try again.');
+      console.log('Signup response:', response.data);
+    
+      try {
+        dispatch(login(response.data.user));
+        navigate('/discover');
+      } catch (loginError) {
+        console.error('Login error:', loginError.message);
+        alert('Login failed. Please try again.');
+      }
+    } catch (signupError) {
+      if (signupError.response && signupError.response.data) {
+        // Log or display the specific error message from the backend
+        console.error('Signup error:', signupError.response.data.error);
+        console.error('Signup error with response:', signupError.response.data);
+        alert(`Signup failed: ${signupError.response.data.error}`);
+      } else {
+        console.error('Signup error:', signupError.message);
+        alert('Signup failed. Please try again.');
+      }
     }
   };
 
