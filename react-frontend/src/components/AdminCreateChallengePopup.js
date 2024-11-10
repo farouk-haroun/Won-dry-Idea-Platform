@@ -14,7 +14,7 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
     description: '',
     thumbnail: null,
     category: 'SUSTAINABILITY',
-    status: 'DRAFT'
+    status: 'open'
   });
 
   const categories = [

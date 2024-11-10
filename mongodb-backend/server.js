@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 // Define __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+import ideaSpaceRoutes from './routes/ideaSpaceRoute.js';  // Import ideaSpaceRoute
 
 // Load environment variables from .env file
 dotenv.config();
@@ -67,26 +68,24 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// Registering Routes After Database Connection
-const startServer = async () => {
-  await connectDB();
+// Registering routes
+app.use('/api/ideas', ideaRoutes);  // Register idea routes
+app.use('/api/users', (req, res, next) => {
+  console.log('User route accessed');  // Log user route access
+  next();
+}, userRoutes);
+app.use('/api/teams', teamRoutes);  // Register team routes
+app.use('/api/challenges', challengeRoutes);  // Register challenge routes
+app.use('/api/ideaspaces', ideaSpaceRoutes);  // Register ideaSpace routes
 
-  // Register routes only after DB connection is successful
-  app.use('/api/ideas', ideaRoutes);
-  app.use('/api/users', userRoutes);
-  app.use('/api/teams', teamRoutes);
-  app.use('/api/challenges', challengeRoutes);
-
-  // Start the server
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-};
-
-// Start the server only if not in test mode
-if (process.env.NODE_ENV !== 'test') {
-  startServer();
-}
+// Connect to the database and start the server
+connectDB().then(() => {
+  if (process.env.NODE_ENV !== 'test') {  // Start server if not in test mode
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  }
+});
 
 // Export the app for use in tests
 export { app };

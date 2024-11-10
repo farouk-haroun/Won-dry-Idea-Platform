@@ -41,6 +41,7 @@ export const createChallenge = [
       const savedChallenge = await newChallenge.save();
       res.status(201).json(savedChallenge);
     } catch (error) {
+      console.error('Error creating challenge:', error);
       res.status(400).json({ message: error.message });
     }
   },
