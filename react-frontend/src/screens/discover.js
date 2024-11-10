@@ -90,7 +90,6 @@ const Discover = () => {
         <nav className="hidden md:flex space-x-6 flex-grow justify-center">
           <Link to="/" className="text-gray-700">Home</Link>
           <Link to="/discover" className="text-purple-600 font-semibold">Discover</Link>
-          <Link to="/analytics" className="text-gray-700">Analytics</Link>
         </nav>
         
         <div className="flex items-center space-x-4">
