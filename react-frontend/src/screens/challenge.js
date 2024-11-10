@@ -28,7 +28,7 @@ const Challenge = () => {
     stages: [],
     organizers: [],
     community: { name: '', avatar: '' },
-    metrics: { views: 0, totalIdeas: 0, activeUsers: 0 }
+    metrics: null
   });
   const [loading, setLoading] = useState(!location.state?.challenge);
 
@@ -229,21 +229,25 @@ const Challenge = () => {
                   </div>
                 </>
               )}
-              <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold">{challenge.metrics.views}</p>
-                  <p className="text-sm text-gray-600">views</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold">{challenge.metrics.totalIdeas}</p>
-                  <p className="text-sm text-gray-600">total ideas</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold">{challenge.metrics.activeUsers}</p>
-                  <p className="text-sm text-gray-600">active users</p>
-                </div>
-              </div>
+              {challenge.metrics ? (
+                <>
+                  <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">{challenge.metrics.views || 0}</p>
+                      <p className="text-sm text-gray-600">views</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">{challenge.metrics.totalIdeas || 0}</p>
+                      <p className="text-sm text-gray-600">total ideas</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">{challenge.metrics.activeUsers || 0}</p>
+                      <p className="text-sm text-gray-600">active users</p>
+                    </div>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
         ) : (
