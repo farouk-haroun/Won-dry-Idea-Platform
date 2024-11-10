@@ -18,13 +18,14 @@ export const createChallenge = [
   upload.single('thumbnail'),  // Only accept a single file named `thumbnail`
   async (req, res) => {
     try {
-      const { title, description, stages, status } = req.body;
+      const { title, description, stages, status, category } = req.body;  // Extract category from req.body
       const parsedStages = stages ? JSON.parse(stages) : [];
       const organizerId = req.user?.id; // Replace with actual user ID
 
       // Construct the thumbnail URL or path
       const thumbnailUrl = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
 
+      // Create a new Challenge with category
       const newChallenge = new Challenge({
         title,
         description,
@@ -32,6 +33,7 @@ export const createChallenge = [
         organizers: [organizerId],
         thumbnailUrl,
         status,
+        category, // Add category to the challenge object
       });
 
       const savedChallenge = await newChallenge.save();
@@ -41,7 +43,6 @@ export const createChallenge = [
     }
   },
 ];
-
 // Search for challenges by title
 export const searchChallenges = async (req, res) => {
   try {

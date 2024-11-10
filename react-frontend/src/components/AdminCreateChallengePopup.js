@@ -11,11 +11,19 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
       until: '2024/09/29'
     }],
     organizers: [],
-    attachments: [],
     description: '',
     thumbnail: null,
-    category: 'in Social Innovation'
+    category: 'SUSTAINABILITY',
+    status: 'DRAFT'
   });
+
+  const categories = [
+    'SUSTAINABILITY',
+    'SOCIAL_INNOVATION',
+    'TECHNOLOGY',
+    'HEALTHCARE',
+    'EDUCATION'
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,16 +47,6 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
     }));
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({
-        ...prev,
-        attachments: [...prev.attachments, file]
-      }));
-    }
-  };
-
   const handleThumbnailUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -66,10 +64,6 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
       Object.keys(formData).forEach(key => {
         if (key === 'stages' || key === 'organizers') {
           formDataToSend.append(key, JSON.stringify(formData[key]));
-        } else if (key === 'attachments') {
-          formData[key].forEach(file => {
-            formDataToSend.append('attachments', file);
-          });
         } else if (key === 'thumbnail' && formData[key]) {
           formDataToSend.append('thumbnail', formData[key]);
         } else {
@@ -77,7 +71,7 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
         }
       });
 
-      const response = await axios.post(`${API_BASE_URL}/challenges/create`, formDataToSend, {
+      const response = await axios.post(`${API_BASE_URL}/challenges/challenges`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -167,13 +161,18 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
 
               <div>
                 <label className="block text-gray-700 mb-2">Category:</label>
-                <input
-                  type="text"
+                <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
                   className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>
+                      {category.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -221,45 +220,6 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
                     <Plus className="h-5 w-5 mr-2" />
                     Add Stage
                   </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 mb-2">Attachments:</label>
-                <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                  <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                    multiple
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
-                    <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                    <span className="text-gray-600">Click to upload or drag and drop</span>
-                  </label>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {formData.attachments.map((file, index) => (
-                    <div key={index} className="bg-gray-100 rounded-full px-3 py-1 text-sm flex items-center">
-                      {file.name}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            attachments: prev.attachments.filter((_, i) => i !== index)
-                          }));
-                        }}
-                        className="ml-2 text-gray-500 hover:text-gray-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
                 </div>
               </div>
 
