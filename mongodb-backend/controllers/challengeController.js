@@ -1,5 +1,5 @@
 // controllers/challengeController.js
-import { upload, gfs } from '../config/gridfs.js'; // Adjust path if in `middleware/upload.js`
+import { upload} from '../middleware/upload.js'; // Adjust path if in `middleware/upload.js`
 
 import Challenge from '../models/challengeModel.js';
 
@@ -15,21 +15,21 @@ export const getAllChallenges = async (req, res) => {
 
 // Create a new challenge with file upload
 export const createChallenge = [
-  upload.fields([{ name: 'attachments', maxCount: 10 }, { name: 'thumbnail', maxCount: 1 }]),
+  upload.single('thumbnail'),  // Only accept a single file named `thumbnail`
   async (req, res) => {
     try {
-      const { title, description, stages, organizers, status } = req.body;
+      const { title, description, stages, status } = req.body;
+      const parsedStages = stages ? JSON.parse(stages) : [];
+      const organizerId = req.user?.id; // Replace with actual user ID
 
-      // Get file IDs from GridFS for attachments and thumbnail
-      const attachedFiles = req.files['attachments']?.map(file => file.id) || [];
-      const thumbnailUrl = req.files['thumbnail']?.[0]?.id || null;
+      // Construct the thumbnail URL or path
+      const thumbnailUrl = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
 
       const newChallenge = new Challenge({
         title,
         description,
-        stages: JSON.parse(stages), // Parse stages if sent as JSON string
-        organizers: JSON.parse(organizers), // Parse organizers if needed
-        attachedFiles,
+        stages: parsedStages,
+        organizers: [organizerId],
         thumbnailUrl,
         status,
       });

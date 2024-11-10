@@ -1,33 +1,26 @@
-// config/gridfs.js
+// config/upload.js
 import multer from 'multer';
-import { GridFsStorage } from 'multer-gridfs-storage';
-import mongoose from 'mongoose';
+import fs from 'fs';
+import path from 'path';
 
-// MongoDB connection URI
-const mongoURI = process.env.MONGO_URI; // Use environment variable or default
+// Define the upload path
+const uploadPath = path.join('uploads', 'thumbnails');
 
-// Connect to MongoDB
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
+// Check if the directory exists, and create it if it doesn’t
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
 
-let gfs;
-const conn = mongoose.connection;
-conn.once('open', () => {
-  // Initialize GridFS bucket
-  gfs = new mongoose.mongo.GridFSBucket(conn.db, {
-    bucketName: 'uploads',
-  });
-});
-
-// Configure Multer storage with GridFS
-const storage = new GridFsStorage({
-  url: mongoURI,
-  file: (req, file) => {
-    return {
-      filename: file.originalname,
-      bucketName: 'uploads', // Collection name in MongoDB
-    };
+// Configure Multer storage for the filesystem
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadPath);  // Store thumbnails in `uploads/thumbnails`
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${file.originalname}`;
+    cb(null, uniqueName);
   },
 });
 
-export const upload = multer({ storage });
-export { gfs }; // Export gfs to use in other files if needed
+const upload = multer({ storage });
+export { upload };

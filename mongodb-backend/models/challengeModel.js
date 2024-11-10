@@ -12,12 +12,10 @@ const challengeSchema = new mongoose.Schema({
     },
   ],
   organizers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  attachedFiles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'uploads.files' }], // GridFS file IDs for attached files
   createdAt: { type: Date, default: Date.now },
   status: { type: String, enum: ['open', 'closed'], default: 'open' },
-  thumbnailUrl: { type: mongoose.Schema.Types.ObjectId, ref: 'uploads.files' }, // GridFS file ID for the thumbnail
+  thumbnailUrl: { type: String },  // Use a string to store the file path or URL
 });
 
 const Challenge = mongoose.model('Challenge', challengeSchema);
 export default Challenge;
-
