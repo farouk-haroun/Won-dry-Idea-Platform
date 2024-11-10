@@ -27,7 +27,10 @@ export const addSubmission = async (req, res) => {
   const { challengeId, stageId } = req.params;
   try {
     const challenge = await Challenge.findById(challengeId);
+    if (!challenge) return res.status(404).json({ message: "Challenge not found" });
+
     const stage = challenge.stages.id(stageId);
+    if (!stage) return res.status(404).json({ message: "Stage not found" });
 
     stage.submissions.push(req.body.submissionId);
     await challenge.save();
@@ -36,5 +39,3 @@ export const addSubmission = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-//create a challenge, delete a challenge, join a challenge, 

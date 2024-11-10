@@ -14,7 +14,7 @@ dotenv.config();
 
 // Initialize the Express application
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware to parse JSON
 app.use(express.json());
@@ -43,15 +43,22 @@ app.use(cors(corsOptions));  // Apply CORS middleware
 // MongoDB Connection Function
 const connectDB = async () => {
   const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
-  const MONGO_URI = `${process.env.MONGO_URI}${dbName}`;
+  const MONGO_URI = `mongodb+srv://farharn:gEW3ivzPXjWUbvBi@ideas-platform-cluster.9oqgm.mongodb.net/test`;
+  
+  console.log("Connecting to MongoDB with URI:", MONGO_URI);  // Log URI for debugging
+
   try {
-    await mongoose.connect(MONGO_URI);  // Connect to MongoDB (options are now default)
+    await mongoose.connect(MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     console.log('MongoDB connected successfully');
   } catch (err) {
     console.error('MongoDB connection failed:', err);
-    process.exit(1);  // Exit process with failure
+    process.exit(1);
   }
 };
+
 
 // Basic Route for API Status
 app.get('/', (req, res) => {
