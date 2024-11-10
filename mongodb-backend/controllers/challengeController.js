@@ -18,13 +18,14 @@ export const createChallenge = [
   upload.single('thumbnail'),  // Only accept a single file named `thumbnail`
   async (req, res) => {
     try {
-      const { title, description, stages, status } = req.body;
+      const { title, description, stages, status, category } = req.body;  // Extract category from req.body
       const parsedStages = stages ? JSON.parse(stages) : [];
       const organizerId = req.user?.id; // Replace with actual user ID
 
       // Construct the thumbnail URL or path
       const thumbnailUrl = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
 
+      // Create a new Challenge with category
       const newChallenge = new Challenge({
         title,
         description,
@@ -32,6 +33,7 @@ export const createChallenge = [
         organizers: [organizerId],
         thumbnailUrl,
         status,
+        category, // Add category to the challenge object
       });
 
       const savedChallenge = await newChallenge.save();
@@ -42,6 +44,26 @@ export const createChallenge = [
     }
   },
 ];
+// Search for challenges by title
+export const searchChallenges = async (req, res) => {
+  try {
+    const { title } = req.query;
+
+    if (!title) {
+      return res.status(400).json({ message: 'Title query parameter is required' });
+    }
+
+    // Case-insensitive search using regular expressions
+    const challenges = await Challenge.find({
+      title: { $regex: title, $options: 'i' } // 'i' for case-insensitive search
+    }).populate('organizers stages.submissions');
+
+    res.status(200).json(challenges);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Add submission to a challenge stage
 export const addSubmission = async (req, res) => {
   const { challengeId, stageId } = req.params;
