@@ -1,6 +1,6 @@
 import express from 'express';  // Import Express
 import mongoose from 'mongoose';  // Import Mongoose
-import dotenv from 'dotenv';  // Import dotenv
+import dotenv from 'dotenv';  // Import dotenv for environment variables
 import cors from 'cors';  // Import CORS middleware
 
 // Importing routes
@@ -9,61 +9,72 @@ import userRoutes from './routes/userRoute.js';  // Import userRoute
 import teamRoutes from './routes/teamRoute.js';  // Import teamRoute
 import challengeRoutes from './routes/challengeRoute.js';  // Import challengeRoute
 
-// Configure dotenv to load environment variables
-dotenv.config();  // Load environment variables from .env file
+// Load environment variables from .env file
+dotenv.config();  
 
 // Initialize the Express application
 const app = express();
-
 const PORT = process.env.PORT || 5000;
 
 // Middleware to parse JSON
 app.use(express.json());
 
 // CORS Configuration
-const corsOptions = {
-  origin: 'http://localhost:3000',  // Replace this with your frontend domain in production
-  credentials: true,                // Allow credentials (cookies, headers)
-};
-app.use(cors(corsOptions));          // Apply the CORS middleware with options
+const allowedOrigins = [
+  process.env.FRONTEND_URL,         // Your production frontend URL
+  'http://localhost:3000',          // Local development
+  'http://localhost:4000'           // Another allowed origin (if needed)
+];
 
-// MongoDB connection
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Check if the origin is in the allowedOrigins array or if it's undefined (like in server-to-server requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,  // Allow credentials (cookies, headers)
+};
+
+app.use(cors(corsOptions));  // Apply CORS middleware
+
+// MongoDB Connection Function
 const connectDB = async () => {
   const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
   const MONGO_URI = `${process.env.MONGO_URI}${dbName}`;
   try {
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(MONGO_URI);  // Connect to MongoDB (options are now default)
     console.log('MongoDB connected successfully');
   } catch (err) {
     console.error('MongoDB connection failed:', err);
-    process.exit(1);
+    process.exit(1);  // Exit process with failure
   }
 };
 
-// Basic route
+// Basic Route for API Status
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// Registering routes here with corrected imports
-app.use('/api/ideas', ideaRoutes);  // Register the idea routes under /api/ideas
+// Registering routes
+app.use('/api/ideas', ideaRoutes);  // Register idea routes
 app.use('/api/users', (req, res, next) => {
-  console.log('User route accessed');
+  console.log('User route accessed');  // Log user route access
   next();
 }, userRoutes);
-app.use('/api/teams', teamRoutes);  // Register the team routes under /api/teams
-app.use('/api/challenges', challengeRoutes);  // Register the challenge routes under /api/challenges
+app.use('/api/teams', teamRoutes);  // Register team routes
+app.use('/api/challenges', challengeRoutes);  // Register challenge routes
 
-
-// Start the server only if the file is not being imported (i.e., when running directly)
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-
-  // Connect to the database
-  connectDB();
-}
+// Connect to the database and start the server
+connectDB().then(() => {
+  if (process.env.NODE_ENV !== 'test') {  // Start server if not in test mode
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  }
+});
 
 // Export the app for use in tests
 export default app;

@@ -92,7 +92,6 @@ const Challenge = () => {
         <nav className="hidden md:flex space-x-6">
           <Link to="/" className="text-gray-700">Home</Link>
           <Link to="/discover" className="text-gray-700">Discover</Link>
-          <Link to="/analytics" className="text-gray-700">Analytics</Link>
         </nav>
         
         <div className="flex items-center space-x-4">

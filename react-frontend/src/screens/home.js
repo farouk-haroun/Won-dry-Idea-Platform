@@ -26,7 +26,6 @@ const Home = () => {
           <nav className="hidden md:flex space-x-6">
             <Link to="/" className="text-[#874c9e] text-xl font-bold">Home</Link>
             <Link to="/discover" className="text-[#2c2c2c] text-xl">Discover</Link>
-            <Link to="/analytics" className="text-[#2c2c2c] text-xl">Analytics</Link>
           </nav>
         </div>
         <div className="flex items-center space-x-4">

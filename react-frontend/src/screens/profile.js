@@ -61,9 +61,12 @@ const Profile = () => {
             <Link to="/discover" className="text-[#2c2c2c] text-xl">
               Discover
             </Link>
+<<<<<<< HEAD
             <Link to="/analytics" className="text-[#2c2c2c] text-xl">
               Analytics
             </Link>
+=======
+>>>>>>> 521bdace01a01031a32efe0d31d4931b49ec0fff
           </nav>
         </div>
         <div className="flex items-center space-x-4">
