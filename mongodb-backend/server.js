@@ -8,6 +8,7 @@ import ideaRoutes from './routes/ideaRoute.js';  // Import ideaRoute
 import userRoutes from './routes/userRoute.js';  // Import userRoute
 import teamRoutes from './routes/teamRoute.js';  // Import teamRoute
 import challengeRoutes from './routes/challengeRoute.js';  // Import challengeRoute
+import ideaSpaceRoutes from './routes/ideaSpaceRoute.js';  // Import ideaSpaceRoute
 
 // Load environment variables from .env file
 dotenv.config();  
@@ -66,6 +67,7 @@ app.use('/api/users', (req, res, next) => {
 }, userRoutes);
 app.use('/api/teams', teamRoutes);  // Register team routes
 app.use('/api/challenges', challengeRoutes);  // Register challenge routes
+app.use('/api/ideaspaces', ideaSpaceRoutes);  // Register ideaSpace routes
 
 // Connect to the database and start the server
 connectDB().then(() => {
