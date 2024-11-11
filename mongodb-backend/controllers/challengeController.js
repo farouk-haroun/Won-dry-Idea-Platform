@@ -1,9 +1,10 @@
 // controllers/challengeController.js
-import { upload} from '../middleware/upload.js'; // Adjust path if in `middleware/upload.js`
-
 import Challenge from '../models/challengeModel.js';
-import fs from 'fs';
-import path from 'path'
+import { upload, uploadToS3 } from '../middleware/upload.js';
+import s3 from '../middleware/s3.js'; // Import the S3 instance if needed for delete
+import path from 'path';
+import 'dotenv/config'; 
+ 
 
 // Get all challenges
 export const getAllChallenges = async (req, res) => {
@@ -15,20 +16,20 @@ export const getAllChallenges = async (req, res) => {
   }
 };
 
-// Create a new challenge with file upload
-const BASE_URL = process.env.BASE_URL
+// Create a new challenge with S3 file upload
 export const createChallenge = [
-  upload.single('thumbnail'),  // Only accept a single file named `thumbnail`
+  upload.single('thumbnail'),
   async (req, res) => {
     try {
-      const { title, description, stages, status, category } = req.body;  // Extract category from req.body
+      const { title, description, stages, status, category } = req.body;
       const parsedStages = stages ? JSON.parse(stages) : [];
-      const organizerId = req.user?.id; // Replace with actual user ID
+      const organizerId = req.user?.id;
 
-       // Construct the full URL for the thumbnail
-       const thumbnailUrl = req.file ? `${BASE_URL}/uploads/thumbnails/${req.file.filename}` : null;
+      let thumbnailUrl = null;
+      if (req.file) {
+        thumbnailUrl = await uploadToS3(req.file); // Upload to S3 and get URL
+      }
 
-      // Create a new Challenge with category
       const newChallenge = new Challenge({
         title,
         description,
@@ -36,7 +37,7 @@ export const createChallenge = [
         organizers: [organizerId],
         thumbnailUrl,
         status,
-        category, // Add category to the challenge object
+        category,
       });
 
       const savedChallenge = await newChallenge.save();
@@ -47,72 +48,31 @@ export const createChallenge = [
     }
   },
 ];
-// Search for challenges by title
-export const searchChallenges = async (req, res) => {
-  try {
-    const { title } = req.query;
 
-    if (!title) {
-      return res.status(400).json({ message: 'Title query parameter is required' });
-    }
-
-    // Case-insensitive search using regular expressions
-    const challenges = await Challenge.find({
-      title: { $regex: title, $options: 'i' } // 'i' for case-insensitive search
-    }).populate('organizers stages.submissions');
-
-    res.status(200).json(challenges);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Add submission to a challenge stage
-export const addSubmission = async (req, res) => {
-  const { challengeId, stageId } = req.params;
-  try {
-    const challenge = await Challenge.findById(challengeId);
-    if (!challenge) return res.status(404).json({ message: "Challenge not found" });
-
-    const stage = challenge.stages.id(stageId);
-    if (!stage) return res.status(404).json({ message: "Stage not found" });
-
-    stage.submissions.push(req.body.submissionId);
-    await challenge.save();
-    res.status(200).json(challenge);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-
+// Delete a challenge, including S3 thumbnail deletion
 export const deleteChallenge = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Find the challenge by ID
     const challenge = await Challenge.findById(id);
 
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
     }
 
-    // If there is a thumbnail, delete it from the filesystem
+    // Delete the thumbnail from S3 if it exists
     if (challenge.thumbnailUrl) {
-      // Remove the base URL from the thumbnail URL if present
-      const relativeThumbnailPath = challenge.thumbnailUrl.replace(BASE_URL, '');
-      
-      // Get the absolute path on the server
-      const thumbnailPath = path.join(process.cwd(), relativeThumbnailPath);
+      // Extract the key from the S3 URL
+      const urlParts = challenge.thumbnailUrl.split('/');
+      const fileKey = urlParts.slice(-2).join('/'); // Assuming key is "folder/filename.ext"
 
-      // Delete the file from the filesystem
-      fs.unlink(thumbnailPath, (err) => {
-        if (err) {
-          console.error('Failed to delete thumbnail:', err);
-        } else {
-          console.log('Thumbnail deleted successfully');
-        }
-      });
+      const s3Params = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: fileKey,
+      };
+
+      await s3.deleteObject(s3Params).promise();
+      console.log('Thumbnail deleted from S3 successfully');
     }
 
     // Delete the challenge from the database
@@ -123,7 +83,6 @@ export const deleteChallenge = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-//create a challenge, delete a challenge, join a challenge, search a challenge
 
 export const incrementViewCount = async (req, res) => {
   const { id } = req.params;
