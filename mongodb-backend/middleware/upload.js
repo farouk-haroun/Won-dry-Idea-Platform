@@ -5,9 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import 'dotenv/config'; // Add this line at the top
 
 // Debugging: Log AWS credentials
-console.log('AWS Region:', process.env.AWS_REGION);
-console.log('AWS Access Key:', process.env.AWS_ACCESS_KEY_ID);
-console.log('AWS Secret Key:', process.env.AWS_SECRET_ACCESS_KEY);
+
 
 const storage = multer.memoryStorage(); // Store file in memory for direct upload
 const upload = multer({ storage });
