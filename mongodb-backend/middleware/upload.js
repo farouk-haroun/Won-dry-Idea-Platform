@@ -14,7 +14,7 @@ const uploadToS3 = async (file) => {
     Key: fileKey,
     Body: file.buffer,
     ContentType: file.mimetype,
-    ACL: 'public-read', // Optional: Set this based on your access requirements
+     // Optional: Set this based on your access requirements
   };
 
   const command = new PutObjectCommand(params);
