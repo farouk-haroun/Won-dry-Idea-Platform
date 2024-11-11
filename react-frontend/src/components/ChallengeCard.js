@@ -1,17 +1,22 @@
+// src/components/ChallengeCard.js
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, MessageCircle, Eye } from 'lucide-react';
 
 const ChallengeCard = ({ challenge }) => {
-  const { _id, title, description, status, stages, thumbnailUrl, organizers } = challenge;
+  const { _id, title, description, status, stages, thumbnailUrl, organizers, viewCounts } = challenge;
   const submissions = stages?.reduce((sum, stage) => sum + (stage.submissions?.length || 0), 0) || 0;
-  const views = Math.floor(Math.random() * 50000); // TODO: Replace with actual views
 
   return (
     <Link to={`/challenge/${_id}`} state={{ challenge }} className="block">
       <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
         <div className="relative">
-          <img src={thumbnailUrl || "https://images.pexels.com/photos/355952/pexels-photo-355952.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"} alt="Challenge" className="w-full h-[256px] object-cover" />
+          <img 
+            src={thumbnailUrl || "https://images.pexels.com/photos/355952/pexels-photo-355952.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"} 
+            alt="Challenge Thumbnail" 
+            className="w-full h-[256px] object-cover" 
+          />
           <button className="absolute top-2 right-2 bg-white rounded-full p-1 shadow w-12 h-12 flex items-center justify-center">
             <Star className="text-gray-400 w-5 h-5" />
           </button>
@@ -30,7 +35,7 @@ const ChallengeCard = ({ challenge }) => {
                 <MessageCircle className="w-4 h-4 mr-1" /> {submissions}
               </span>
               <span className="flex items-center">
-                <Eye className="w-4 h-4 mr-1" /> {views}
+                <Eye className="w-4 h-4 mr-1" /> {viewCounts || 0}
               </span>
             </div>
             <span className="flex items-center">

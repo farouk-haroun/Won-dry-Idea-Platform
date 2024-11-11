@@ -1,3 +1,5 @@
+// src/screens/challenge.js
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { ArrowLeft, Star, Share2, Search, Bell, Menu, Plus, Users, X } from 'lucide-react';
@@ -5,6 +7,8 @@ import IdeaCard from '../components/IdeaCard';
 import ProfilePopup from '../components/ProfilePopup';
 import { Dialog, Transition } from '@headlessui/react';
 import { API_BASE_URL } from '../utils/constants';
+import axios from 'axios';
+
 const Challenge = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showProfilePopup, setShowProfilePopup] = useState(false);
@@ -12,15 +16,8 @@ const Challenge = () => {
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [isCreateTeamDialogOpen, setIsCreateTeamDialogOpen] = useState(false);
   const [newTeamData, setNewTeamData] = useState({ name: '', description: '' });
-  const [teams] = useState([
-    { _id: '1', name: 'Green Innovation', description: 'Working on sustainable solutions', members: ['John', 'Jane'] },
-    { _id: '2', name: 'Tech Warriors', description: 'Technology focused solutions', members: ['Mike', 'Sarah'] },
-    { _id: '3', name: 'Future Builders', description: 'Building for tomorrow', members: ['Alex', 'Emma'] },
-  ]);
-
-  const location = useLocation();
-  const { id } = useParams();
-  const [challenge, setChallenge] = useState(location.state?.challenge || {
+  const [teams, setTeams] = useState([]);
+  const [challenge, setChallenge] = useState({
     title: '',
     description: '',
     format: '',
@@ -30,41 +27,41 @@ const Challenge = () => {
     community: { name: '', avatar: '' },
     metrics: null
   });
-  const [loading, setLoading] = useState(!location.state?.challenge);
+  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
+
+  const location = useLocation();
 
   useEffect(() => {
     const fetchChallenge = async () => {
-      if (!location.state?.challenge) {
-        try {
-          setLoading(true);
-          const response = await fetch(`${API_BASE_URL}/api/challenges/${id}`);
-          const data = await response.json();
-          setChallenge(data);
-        } catch (error) {
-          console.error('Error fetching challenge:', error);
-        } finally {
-          setLoading(false);
-        }
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_BASE_URL}/api/challenges/${id}`);
+        setChallenge(response.data);
+      } catch (error) {
+        console.error('Error fetching challenge:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchChallenge();
-  }, [id, location.state]);
+  }, [id]);
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/challenges/${id}/teams`);
+        setTeams(response.data);
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+      }
+    };
 
-  // Test ideas data
-  const ideas = [
-    { title: "Solar-Powered Campus Shuttles", category: "Transportation", stage: "Final Showcase", author: "Team Green", comments: 15, views: 230, ideas: 3, rating: 4 },
-    { title: "AI-Driven Energy Optimization", category: "Sustainability Dashboard", stage: "2nd Round Evaluation", author: "Tech Innovators", comments: 22, views: 180, ideas: 5, rating: 5 },
-    { title: "Bike-Sharing Program", category: "Transportation", stage: "1st Evaluation", author: "Eco Riders", comments: 8, views: 120, ideas: 2, rating: 3 },
-  ];
+    fetchTeams();
+  }, [id]);
 
   const handleLogout = () => {
-    // Implement logout logic here
-    // For example: clear local storage, reset auth state, etc.
     navigate('/login');
   };
 
@@ -76,21 +73,28 @@ const Challenge = () => {
     setIsTeamDialogOpen(true);
   };
 
-  const handleCreateTeam = (e) => {
+  const handleCreateTeam = async (e) => {
     e.preventDefault();
-    // Here you would typically make an API call to create the team
-    console.log('Creating team:', newTeamData);
-    setIsCreateTeamDialogOpen(false);
-    setNewTeamData({ name: '', description: '' });
+    try {
+      await axios.post(`${API_BASE_URL}/api/challenges/${id}/teams`, newTeamData);
+      setIsCreateTeamDialogOpen(false);
+      setNewTeamData({ name: '', description: '' });
+      alert('Team created successfully');
+    } catch (error) {
+      console.error('Error creating team:', error);
+    }
   };
 
-  const handleJoinTeam = (teamId) => {
-    // Here you would typically make an API call to join the team
-    console.log('Joining team:', teamId);
-    setIsTeamDialogOpen(false);
+  const handleJoinTeam = async (teamId) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/teams/${teamId}/join`);
+      setIsTeamDialogOpen(false);
+      alert('Joined team successfully');
+    } catch (error) {
+      console.error('Error joining team:', error);
+    }
   };
 
-  // Update the stages display to match the MongoDB schema
   const renderStages = () => {
     return (challenge.stages || []).map((stage, index) => {
       const isOpen = new Date(stage.deadline) > new Date();
@@ -112,6 +116,16 @@ const Challenge = () => {
       );
     });
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  const ideas = [
+    { title: "Solar-Powered Campus Shuttles", category: "Transportation", stage: "Final Showcase", author: "Team Green", comments: 15, views: 230, ideas: 3, rating: 4 },
+    { title: "AI-Driven Energy Optimization", category: "Sustainability Dashboard", stage: "2nd Round Evaluation", author: "Tech Innovators", comments: 22, views: 180, ideas: 5, rating: 5 },
+    { title: "Bike-Sharing Program", category: "Transportation", stage: "1st Evaluation", author: "Eco Riders", comments: 8, views: 120, ideas: 2, rating: 3 },
+  ];
 
   return (
     <div className="bg-white">
@@ -229,7 +243,7 @@ const Challenge = () => {
                   </div>
                 </>
               )}
-              {challenge.metrics ? (
+              {challenge.metrics && (
                 <>
                   <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
                   <div className="grid grid-cols-3 gap-4">
@@ -247,7 +261,7 @@ const Challenge = () => {
                     </div>
                   </div>
                 </>
-              ) : null}
+              )}
             </div>
           </div>
         ) : (
