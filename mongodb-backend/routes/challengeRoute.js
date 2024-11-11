@@ -2,7 +2,8 @@
 import express from 'express';
 import {getAllChallenges, 
     createChallenge,
-deleteChallenge} from '../controllers/challengeController.js';
+deleteChallenge,
+searchChallenges} from '../controllers/challengeController.js';
 const router = express.Router();
 
 // Route to create a challenge with file uploads
@@ -14,5 +15,6 @@ router.get('/challenges', getAllChallenges);
 // router.get('/search', searchChallenges);
 // Delete route
 router.delete('/challenges/:id', deleteChallenge);
+router.get('/challenges/search', searchChallenges);
 
 export default router;

@@ -83,3 +83,22 @@ export const deleteChallenge = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const searchChallenges = async (req, res) => {
+  try {
+    const { title } = req.query;
+
+    if (!title) {
+      return res.status(400).json({ message: 'Title query parameter is required' });
+    }
+
+    // Case-insensitive search using regular expressions
+    const challenges = await Challenge.find({
+      title: { $regex: title, $options: 'i' } // 'i' for case-insensitive search
+    }).populate('organizers stages.submissions');
+
+    res.status(200).json(challenges);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
