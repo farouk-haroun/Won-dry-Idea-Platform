@@ -1,6 +1,6 @@
 // controllers/challengeController.js
 import Challenge from '../models/challengeModel.js';
-import upload from '../middleware/upload.js';
+import { upload, uploadToS3 } from '../middleware/upload.js';
 import s3 from '../middleware/s3.js'; // Import the S3 instance if needed for delete
 import path from 'path';
 
@@ -16,16 +16,18 @@ export const getAllChallenges = async (req, res) => {
 
 // Create a new challenge with S3 file upload
 export const createChallenge = [
-  upload.single('thumbnail'),  // `upload` now uses multer-s3 to upload directly to S3
+  upload.single('thumbnail'),
   async (req, res) => {
     try {
       const { title, description, stages, status, category } = req.body;
       const parsedStages = stages ? JSON.parse(stages) : [];
-      const organizerId = req.user?.id; // Replace with actual user ID
+      const organizerId = req.user?.id;
 
-      const thumbnailUrl = req.file ? req.file.location : null; // Use S3 URL from multer-s3
+      let thumbnailUrl = null;
+      if (req.file) {
+        thumbnailUrl = await uploadToS3(req.file); // Upload to S3 and get URL
+      }
 
-      // Create a new Challenge with the S3 URL
       const newChallenge = new Challenge({
         title,
         description,
