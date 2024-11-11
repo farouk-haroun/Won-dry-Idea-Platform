@@ -46,8 +46,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection and GridFS Setup
 const connectDB = async () => {
