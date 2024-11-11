@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { Star, MessageCircle, Eye } from 'lucide-react';
 
 const ChallengeCard = ({ challenge }) => {
-  const { _id, title, description, status, stages, thumbnailUrl } = challenge;
-  const submissions = stages.reduce((sum, stage) => sum + stage.submissions.length, 0);
-  const views = Math.floor(Math.random() * 50000); // Placeholder for views
+  const { _id, title, description, status, stages, thumbnailUrl, organizers } = challenge;
+  const submissions = stages?.reduce((sum, stage) => sum + (stage.submissions?.length || 0), 0) || 0;
+  const views = Math.floor(Math.random() * 50000); // TODO: Replace with actual views
 
   return (
-    <Link to={`/challenge/${_id}`} className="block">
+    <Link to={`/challenge/${_id}`} state={{ challenge }} className="block">
       <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
         <div className="relative">
           <img src={thumbnailUrl || "https://images.pexels.com/photos/355952/pexels-photo-355952.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"} alt="Challenge" className="w-full h-[256px] object-cover" />

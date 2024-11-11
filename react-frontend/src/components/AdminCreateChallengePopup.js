@@ -10,7 +10,8 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
     organizers: [],
     description: '',
     thumbnail: null,
-    category: 'in Social Innovation'
+    category: 'SUSTAINABILITY',
+    status: 'open'
   });
 
   const categories = [
