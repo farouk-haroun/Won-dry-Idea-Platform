@@ -103,7 +103,7 @@ const Home = () => {
             challenges.map((challenge) => (
               <div key={challenge._id} className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row mb-6">
                 <img 
-                  src={challenge.thumbnailUrl || "/default-challenge-image.jpg"} 
+                  src={challenge.thumbnailUrl ? challenge.thumbnailUrl : "/default-challenge-image.jpg"} 
                   alt={challenge.title} 
                   className="w-full md:w-1/3 rounded-lg mb-6 md:mb-0 md:mr-6 object-cover h-[250px]" 
                 />
