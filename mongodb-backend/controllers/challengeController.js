@@ -4,6 +4,8 @@ import { upload, uploadToS3 } from '../middleware/upload.js';
 import s3 from '../middleware/s3.js'; // Import the S3 instance if needed for delete
 import path from 'path';
 
+const S3_BUCKET_NAME="wondry-idea-platform" 
+
 // Get all challenges
 export const getAllChallenges = async (req, res) => {
   try {
@@ -65,7 +67,7 @@ export const deleteChallenge = async (req, res) => {
       const fileKey = urlParts.slice(-2).join('/'); // Assuming key is "folder/filename.ext"
 
       const s3Params = {
-        Bucket: process.env.S3_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME,
         Key: fileKey,
       };
 
