@@ -57,24 +57,22 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
     e.preventDefault();
     try {
       const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
+      Object.keys(formData).forEach((key) => {
         if (key === 'stages' || key === 'organizers') {
           formDataToSend.append(key, JSON.stringify(formData[key]));
         } else if (key === 'thumbnail' && formData[key]) {
-          formDataToSend.append('thumbnail', formData[key]);  // Append the thumbnail file
+          formDataToSend.append('thumbnail', formData[key]);
         } else {
           formDataToSend.append(key, formData[key]);
         }
       });
   
       const response = await axios.post(`${API_BASE_URL}/challenges`, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
   
       if (response.status === 201) {
-        onClose();  // Close popup if creation is successful
+        onClose();  // Close popup if the challenge is created successfully
       }
     } catch (error) {
       console.error('Error creating challenge:', error);
