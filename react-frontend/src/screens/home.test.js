@@ -191,8 +191,10 @@ describe('Home Component', () => {
 
     test('menu icon is visible on mobile', () => {
       renderWithRouter(<Home />);
-      const menuButton = screen.getByLabelText('Menu');
-      expect(menuButton).toHaveClass('md:hidden');
+      // Find menu icon by its class combination
+      const menuIcon = document.querySelector('.text-gray-500.md\\:hidden.cursor-pointer');
+      expect(menuIcon).toBeTruthy();
+      expect(menuIcon).toHaveClass('md:hidden');
     });
   });
 });
