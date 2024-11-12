@@ -25,8 +25,10 @@ router.get('/', getAllChallenges);
 router.delete('/:id', deleteChallenge);
 router.get('/search', searchChallenges);
 
-router.get('/:id', getChallengeById);  // /api/challenges/:id
+// router.get('/:id', getChallengeById);  // /api/challenges/:id
 router.get('/:id/teams', getChallengeTeams); 
+router.get('/:id', getChallengeById);
+
 
 router.patch('/:id/view', incrementViewCount);
 router.patch('/:id/archive', archiveChallenge);
