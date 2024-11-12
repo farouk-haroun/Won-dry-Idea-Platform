@@ -7,13 +7,37 @@ import Team from '../models/teamModel.js';
 // Get all challenges
 export const getAllChallenges = async (req, res) => {
   try {
-    const { sortBy } = req.query;
-    let sortCriteria = { createdAt: -1 }; // Default to sort by most recent
-    if (sortBy === 'popularity') {
-      sortCriteria = { viewCounts: -1 };
+    const { sortBy, category, status, startDate, endDate } = req.query;
+    const filter = {};
+
+    // Apply filters based on query parameters
+    if (category) {
+      filter.category = category;
     }
 
-    const challenges = await Challenge.find()
+    if (status) {
+      filter.status = status;
+    }
+
+    if (startDate && endDate) {
+      filter.createdAt = { 
+        $gte: new Date(startDate), 
+        $lte: new Date(endDate) 
+      };
+    }
+
+    // Define sorting criteria separately
+    let sortCriteria = {};
+    if (sortBy === 'popularity') {
+      sortCriteria = { viewCounts: -1 }; // Sort by view counts (popularity)
+    } else if (sortBy === 'date') {
+      sortCriteria = { createdAt: -1 }; // Sort by creation date (most recent first)
+    } else {
+      sortCriteria = { createdAt: -1 }; // Default to sorting by creation date
+    }
+
+    // Fetch filtered and sorted challenges
+    const challenges = await Challenge.find(filter)
       .sort(sortCriteria)
       .populate('organizers stages.submissions')
       .populate('ideaSpace');
@@ -73,32 +97,16 @@ export const deleteChallenge = async (req, res) => {
       return res.status(400).json({ message: 'Challenge must be archived before deletion' });
     }
 
-    // Delete the thumbnail from S3 if it exists
-    if (challenge.thumbnailUrl) {
-      // Extract the key from the S3 URL
-      const urlParts = challenge.thumbnailUrl.split('/');
-      const fileKey = urlParts.slice(-2).join('/'); // Assuming key is "folder/filename.ext"
-
-      const deleteParams = {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: fileKey,
-      };
-
-      // Use DeleteObjectCommand in AWS SDK v3
-      const command = new DeleteObjectCommand(deleteParams);
-      await s3.send(command); // Send the command to delete the object
-      console.log('Thumbnail deleted from S3 successfully');
-    }
-
-    // Delete the challenge from the database
+    // Only delete from MongoDB without removing S3 thumbnail
     await Challenge.findByIdAndDelete(id);
 
     res.status(200).json({ message: 'Challenge deleted successfully' });
   } catch (error) {
     console.error('Error deleting challenge:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // Search challenges with sorting options
 export const searchChallenges = async (req, res) => {

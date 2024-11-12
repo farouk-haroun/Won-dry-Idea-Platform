@@ -236,6 +236,7 @@ export const updateUserProfile = async (req, res) => {
   }
 };
 
+
 // User and Admin Management
 export const getUserById = async (req, res) => {
   try {
