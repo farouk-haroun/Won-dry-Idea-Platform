@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, MessageCircle, Eye, Trash2, Archive } from 'lucide-react';
 import axios from 'axios';
@@ -7,8 +7,9 @@ import { API_BASE_URL } from '../utils/constants';
 const ChallengeCard = ({ challenge, onChallengeDeleted, onChallengeArchived }) => {
   const { _id, title, description, status, stages, thumbnailUrl } = challenge;
   const submissions = stages?.reduce((sum, stage) => sum + (stage.submissions?.length || 0), 0) || 0;
-  const [views, setViews] = useState(challenge.viewCounts || 0); // Initialize with backend view count
+  const [views, setViews] = useState(challenge.viewCounts || 0);
   const [isArchived, setIsArchived] = useState(status === 'archived');
+
   // Delete challenge function
   const deleteChallenge = async () => {
     try {
@@ -19,16 +20,16 @@ const ChallengeCard = ({ challenge, onChallengeDeleted, onChallengeArchived }) =
     }
   };
 
- // Archive challenge function
- const archiveChallenge = async () => {
-  try {
-    await axios.patch(`${API_BASE_URL}/challenges/${_id}/archive`);
-    setIsArchived(true); // Update local state to reflect archived status
-    if (onChallengeArchived) onChallengeArchived(_id); // Call the callback if provided
-  } catch (error) {
-    console.error('Error archiving challenge:', error);
-  }
-};
+  // Archive challenge function
+  const archiveChallenge = async () => {
+    try {
+      await axios.patch(`${API_BASE_URL}/challenges/${_id}/archive`);
+      setIsArchived(true); // Update local state to reflect archived status
+      if (onChallengeArchived) onChallengeArchived(_id); // Call the callback if provided
+    } catch (error) {
+      console.error('Error archiving challenge:', error);
+    }
+  };
 
   const incrementViewCount = async () => {
     try {
@@ -77,18 +78,18 @@ const ChallengeCard = ({ challenge, onChallengeDeleted, onChallengeArchived }) =
               </span>
             </div>
             <div className="flex items-center space-x-2">
-          {/* Delete Button */}
-          <button onClick={deleteChallenge} className="text-red-500 hover:text-red-700">
-            <Trash2 className="w-5 h-5" />
-          </button>
+              {/* Delete Button */}
+              <button onClick={deleteChallenge} className="text-red-500 hover:text-red-700">
+                <Trash2 className="w-5 h-5" />
+              </button>
 
-          {/* Archive Button */}
-          {!isArchived && (
-            <button onClick={archiveChallenge} className="text-yellow-500 hover:text-yellow-700">
-              <Archive className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+              {/* Archive Button */}
+              {!isArchived && (
+                <button onClick={archiveChallenge} className="text-yellow-500 hover:text-yellow-700">
+                  <Archive className="w-5 h-5" />
+                </button>
+              )}
+            </div>
             <span className="flex items-center">
               <span className="text-lg mr-1">💡</span> {submissions}
             </span>

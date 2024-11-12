@@ -4,7 +4,9 @@ import {getAllChallenges,
     createChallenge,
 deleteChallenge,
 searchChallenges,
-incrementViewCount} from '../controllers/challengeController.js';
+incrementViewCount,
+getChallengeById,
+getChallengeTeams} from '../controllers/challengeController.js';
 const router = express.Router();
 
 router.post('/challenges', createChallenge);  // File upload handled here
@@ -15,6 +17,9 @@ router.get('/challenges', getAllChallenges);
 // Delete route
 router.delete('/challenges/:id', deleteChallenge);
 router.get('/search', searchChallenges);
+
+router.get('/:id', getChallengeById);  // /api/challenges/:id
+router.get('/:id/teams', getChallengeTeams); 
 
 router.patch('/:id/view', incrementViewCount);
 

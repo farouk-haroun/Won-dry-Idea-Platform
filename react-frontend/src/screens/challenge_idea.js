@@ -1,7 +1,7 @@
 // src/screens/challenge_idea.js
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import {
   ArrowLeft,
@@ -98,10 +98,11 @@ const IdeaNavigation = () => {
 };
 
 const ChallengeIdea = ({ isAdmin }) => {
-  const { id } = useParams();
-  const [idea, setIdea] = useState(null);
+  const location = useLocation();
+  const initialIdea = location.state?.idea;
   const [isLoading, setIsLoading] = useState(true);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [idea, setIdea] = useState(initialIdea || {});
   const navigate = useNavigate();
   const [feedback, setFeedback] = useState({
     scalability: 0,
@@ -119,7 +120,7 @@ const ChallengeIdea = ({ isAdmin }) => {
   useEffect(() => {
     const fetchIdea = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/ideas/${id}`);
+        const response = await axios.get(`${API_BASE_URL}/api/ideas/${idea.id}`);
         setIdea(response.data);
       } catch (error) {
         console.error('Failed to fetch idea:', error);
@@ -128,12 +129,16 @@ const ChallengeIdea = ({ isAdmin }) => {
       }
     };
 
-    fetchIdea();
-  }, [id]);
+    if (idea?.id) {
+      fetchIdea();
+    } else {
+      setIsLoading(false);
+    }
+  }, [idea?.id]);
 
   const submitFeedback = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/ideas/${id}/feedback`, feedback);
+      await axios.post(`${API_BASE_URL}/api/ideas/${idea.id}/feedback`, feedback);
       alert('Feedback submitted');
     } catch (error) {
       console.error('Error submitting feedback:', error);
@@ -150,8 +155,8 @@ const ChallengeIdea = ({ isAdmin }) => {
 
   if (!idea) {
     return (
-      <div>
-        <p>You are not authorized to view this challenge.</p>
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-lg text-gray-600">You are not authorized to view this idea.</p>
       </div>
     );
   }

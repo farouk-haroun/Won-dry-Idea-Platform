@@ -20,7 +20,14 @@ const challengeSchema = new mongoose.Schema({
     enum: ['SUSTAINABILITY', 'SOCIAL INNOVATION', 'TECHNOLOGY', 'HEALTHCARE', 'EDUCATION'],
     required: true,
   },
-  viewCounts: { type: Number, default: 0 }, 
+  viewCounts: { type: Number, default: 0 },
+  ideaSpace: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'IdeaSpace',
+    required: false
+  }
+}, {
+  timestamps: true
 });
 
 const Challenge = mongoose.model('Challenge', challengeSchema);

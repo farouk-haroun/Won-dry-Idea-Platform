@@ -1,7 +1,7 @@
 // src/screens/challenge.js
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Star, Share2, Search, Bell, Menu, Plus, Users, X } from 'lucide-react';
 import IdeaCard from '../components/IdeaCard';
 import ProfilePopup from '../components/ProfilePopup';
@@ -30,35 +30,32 @@ const Challenge = () => {
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
 
-  const location = useLocation();
-
   useEffect(() => {
-    const fetchChallenge = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/api/challenges/${id}`);
-        setChallenge(response.data);
+        console.log('Fetching data for challenge:', id);
+        
+        const [challengeRes, teamsRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/challenges/${id}`),
+          axios.get(`${API_BASE_URL}/challenges/${id}/teams`)
+        ]);
+        setChallenge(challengeRes.data);
+        setTeams(teamsRes.data);
       } catch (error) {
-        console.error('Error fetching challenge:', error);
+        console.error('Error fetching data:', error.response || error);
+        alert('Error loading challenge data: ' + 
+          (error.response?.data?.message || error.message) +
+          '\nStatus: ' + error.response?.status +
+          '\nEndpoint: ' + error.config?.url);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchChallenge();
-  }, [id]);
-
-  useEffect(() => {
-    const fetchTeams = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/challenges/${id}/teams`);
-        setTeams(response.data);
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      }
-    };
-
-    fetchTeams();
+    if (id) {
+      fetchData();
+    }
   }, [id]);
 
   const handleLogout = () => {
@@ -76,18 +73,24 @@ const Challenge = () => {
   const handleCreateTeam = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/api/challenges/${id}/teams`, newTeamData);
+      await axios.post(`${API_BASE_URL}/teams`, {
+        ...newTeamData,
+        challengeId: id
+      });
+      const teamsRes = await axios.get(`${API_BASE_URL}/challenges/${id}/teams`);
+      setTeams(teamsRes.data);
       setIsCreateTeamDialogOpen(false);
       setNewTeamData({ name: '', description: '' });
       alert('Team created successfully');
     } catch (error) {
       console.error('Error creating team:', error);
+      alert('Error creating team: ' + error.message);
     }
   };
 
   const handleJoinTeam = async (teamId) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/teams/${teamId}/join`);
+      await axios.post(`${API_BASE_URL}/teams/${teamId}/join`);
       setIsTeamDialogOpen(false);
       alert('Joined team successfully');
     } catch (error) {
