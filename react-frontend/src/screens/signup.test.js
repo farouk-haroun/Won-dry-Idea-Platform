@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
@@ -58,6 +58,7 @@ describe('Signup Component', () => {
   // Form interaction tests
   describe('Form Interactions', () => {
     it('updates input values when user types', async () => {
+      const user = userEvent.setup();
       render(<Signup />, { wrapper: TestWrapper });
       
       const firstNameInput = screen.getByLabelText(/first name/i);
@@ -66,11 +67,13 @@ describe('Signup Component', () => {
       const passwordInput = screen.getByLabelText(/^password/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
 
-      await userEvent.type(firstNameInput, 'John');
-      await userEvent.type(lastNameInput, 'Doe');
-      await userEvent.type(emailInput, 'john@example.com');
-      await userEvent.type(passwordInput, 'password123');
-      await userEvent.type(confirmPasswordInput, 'password123');
+      await act(async () => {
+        await user.type(firstNameInput, 'John');
+        await user.type(lastNameInput, 'Doe');
+        await user.type(emailInput, 'john@example.com');
+        await user.type(passwordInput, 'password123');
+        await user.type(confirmPasswordInput, 'password123');
+      });
 
       expect(firstNameInput).toHaveValue('John');
       expect(lastNameInput).toHaveValue('Doe');
@@ -80,15 +83,22 @@ describe('Signup Component', () => {
     });
 
     it('toggles password visibility when show/hide button is clicked', async () => {
+      const user = userEvent.setup();
       render(<Signup />, { wrapper: TestWrapper });
       
       const passwordInput = screen.getByLabelText(/^password/i);
       const toggleButton = passwordInput.parentElement.querySelector('button');
 
       expect(passwordInput).toHaveAttribute('type', 'password');
-      await userEvent.click(toggleButton);
+      
+      await act(async () => {
+        await user.click(toggleButton);
+      });
       expect(passwordInput).toHaveAttribute('type', 'text');
-      await userEvent.click(toggleButton);
+      
+      await act(async () => {
+        await user.click(toggleButton);
+      });
       expect(passwordInput).toHaveAttribute('type', 'password');
     });
   });
@@ -96,66 +106,74 @@ describe('Signup Component', () => {
   // Validation tests
   describe('Form Validation', () => {
     it('shows error when passwords do not match', async () => {
+      const user = userEvent.setup();
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
       render(<Signup />, { wrapper: TestWrapper });
 
-      // Fill in required fields
-      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
-      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
-      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
-      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
-      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password456');
-      
-      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+      await act(async () => {
+        await user.type(screen.getByLabelText(/first name/i), 'John');
+        await user.type(screen.getByLabelText(/last name/i), 'Doe');
+        await user.type(screen.getByLabelText(/email/i), 'john@example.com');
+        await user.type(screen.getByLabelText(/^password/i), 'password123');
+        await user.type(screen.getByLabelText(/confirm password/i), 'password456');
+        
+        await user.click(screen.getByRole('button', { name: /sign up/i }));
+      });
       
       expect(alertMock).toHaveBeenCalledWith("Passwords don't match");
       alertMock.mockRestore();
     });
 
     it('shows error when password is too short', async () => {
+      const user = userEvent.setup();
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
       render(<Signup />, { wrapper: TestWrapper });
 
-      // Fill in required fields
-      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
-      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
-      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
-      await userEvent.type(screen.getByLabelText(/^password/i), 'pass');
-      await userEvent.type(screen.getByLabelText(/confirm password/i), 'pass');
-      
-      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+      await act(async () => {
+        await user.type(screen.getByLabelText(/first name/i), 'John');
+        await user.type(screen.getByLabelText(/last name/i), 'Doe');
+        await user.type(screen.getByLabelText(/email/i), 'john@example.com');
+        await user.type(screen.getByLabelText(/^password/i), 'pass');
+        await user.type(screen.getByLabelText(/confirm password/i), 'pass');
+        
+        await user.click(screen.getByRole('button', { name: /sign up/i }));
+      });
       
       expect(alertMock).toHaveBeenCalledWith('Password must be at least 8 characters long');
       alertMock.mockRestore();
     });
 
     it('shows error when email is invalid', async () => {
+      const user = userEvent.setup();
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
       render(<Signup />, { wrapper: TestWrapper });
 
-      // Fill in required fields except valid email
-      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
-      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
-      await userEvent.type(screen.getByLabelText(/email/i), 'invalidemail');
-      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
-      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
-      
-      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+      await act(async () => {
+        await user.type(screen.getByLabelText(/first name/i), 'John');
+        await user.type(screen.getByLabelText(/last name/i), 'Doe');
+        await user.type(screen.getByLabelText(/email/i), 'invalidemail');
+        await user.type(screen.getByLabelText(/^password/i), 'password123');
+        await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+        
+        await user.click(screen.getByRole('button', { name: /sign up/i }));
+      });
       
       expect(alertMock).toHaveBeenCalledWith('Please enter a valid email address');
       alertMock.mockRestore();
     });
 
     it('shows error when names are missing', async () => {
+      const user = userEvent.setup();
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
       render(<Signup />, { wrapper: TestWrapper });
 
-      // Fill in everything except names
-      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
-      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
-      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
-      
-      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+      await act(async () => {
+        await user.type(screen.getByLabelText(/email/i), 'john@example.com');
+        await user.type(screen.getByLabelText(/^password/i), 'password123');
+        await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+        
+        await user.click(screen.getByRole('button', { name: /sign up/i }));
+      });
       
       expect(alertMock).toHaveBeenCalledWith('Please enter both first and last name');
       alertMock.mockRestore();
@@ -165,6 +183,7 @@ describe('Signup Component', () => {
   // API integration tests
   describe('API Integration', () => {
     it('successfully registers user and redirects', async () => {
+      const user = userEvent.setup();
       const mockResponse = {
         data: {
           user: {
@@ -178,13 +197,15 @@ describe('Signup Component', () => {
       axios.post.mockResolvedValueOnce(mockResponse);
       render(<Signup />, { wrapper: TestWrapper });
 
-      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
-      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
-      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
-      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
-      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
+      await act(async () => {
+        await user.type(screen.getByLabelText(/first name/i), 'John');
+        await user.type(screen.getByLabelText(/last name/i), 'Doe');
+        await user.type(screen.getByLabelText(/email/i), 'john@example.com');
+        await user.type(screen.getByLabelText(/^password/i), 'password123');
+        await user.type(screen.getByLabelText(/confirm password/i), 'password123');
 
-      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+        await user.click(screen.getByRole('button', { name: /sign up/i }));
+      });
 
       await waitFor(() => {
         expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
@@ -194,26 +215,31 @@ describe('Signup Component', () => {
         });
       });
 
-      const actions = store.getActions();
-      expect(actions).toContainEqual({
-        type: expect.any(String),
-        payload: mockResponse.data.user
+      await waitFor(() => {
+        const actions = store.getActions();
+        expect(actions).toContainEqual({
+          type: expect.any(String),
+          payload: mockResponse.data.user
+        });
       });
     });
 
     it('handles registration failure', async () => {
+      const user = userEvent.setup();
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
       axios.post.mockRejectedValueOnce(new Error('Registration failed'));
       
       render(<Signup />, { wrapper: TestWrapper });
 
-      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
-      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
-      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
-      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
-      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
+      await act(async () => {
+        await user.type(screen.getByLabelText(/first name/i), 'John');
+        await user.type(screen.getByLabelText(/last name/i), 'Doe');
+        await user.type(screen.getByLabelText(/email/i), 'john@example.com');
+        await user.type(screen.getByLabelText(/^password/i), 'password123');
+        await user.type(screen.getByLabelText(/confirm password/i), 'password123');
 
-      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+        await user.click(screen.getByRole('button', { name: /sign up/i }));
+      });
 
       await waitFor(() => {
         expect(alertMock).toHaveBeenCalledWith('Signup failed. Please try again.');
