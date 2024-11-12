@@ -13,40 +13,34 @@ import {
   changePassword,
   registerAdmin,
   changeUserRole,
-  confirmEmail
+  confirmEmail,
+  getUserProfile
 } from '../controllers/userController.js';
 
 const router = express.Router();
 
 // Authentication routes
-router.post('/register', (req, res, next) => {
-  console.log('Register route matched');
-  next();
-}, registerUser); // Register a new user
-
-router.post('/login', loginUser); // Login route
-router.post('/logout', logoutUser); // Logout route
-
-// Email confirmation route
-router.get('/confirm-email', confirmEmail); // Route to confirm email
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.post('/logout', logoutUser);
 
 // Profile routes (require authentication)
-router.get('/profile', authenticateJWT, (req, res) => {
-  res.status(200).json(req.user); // Get current user profile
-});
+router.get('/profile', authenticateJWT, getUserProfile);
+router.put('/profile', authenticateJWT, updateUserProfile);
 
-router.put('/profile', authenticateJWT, updateUserProfile); // Update user profile
+// Email confirmation route
+router.get('/confirm-email', confirmEmail);
 
 // Password management routes
-router.post('/password-reset', requestPasswordReset); // Request password reset
-router.post('/reset-password', resetPassword); // Reset password
-router.put('/change-password', authenticateJWT, changePassword); // Change password while logged in
+router.post('/password-reset', requestPasswordReset);
+router.post('/reset-password', resetPassword);
+router.put('/change-password', authenticateJWT, changePassword);
 
 // Admin-only routes
-router.post('/register-admin', authenticateJWT, authorizeRole('admin'), registerAdmin); // Register a new admin
-router.get('/', authenticateJWT, authorizeRole('admin'), getAllUsers); // Get all users with pagination
-router.put('/change-role', authenticateJWT, authorizeRole('admin'), changeUserRole); // Change user role
-router.delete('/:userId', authenticateJWT, authorizeRole('admin'), deleteUser); // Delete user
+router.post('/register-admin', authenticateJWT, authorizeRole('admin'), registerAdmin);
+router.get('/', authenticateJWT, authorizeRole('admin'), getAllUsers);
+router.put('/change-role', authenticateJWT, authorizeRole('admin'), changeUserRole);
+router.delete('/:userId', authenticateJWT, authorizeRole('admin'), deleteUser);
 
 // Get a user by ID
 router.get('/:userId', getUserById);

@@ -1,39 +1,59 @@
 import Team from '../models/teamModel.js'; // assuming a Team model is defined
 import User from '../models/userModel.js'; // assuming a User model is defined
+import Challenge from '../models/challengeModel.js'; // assuming a Challenge model is defined
 
 // Controller function to create a new team
 export const createTeam = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, challengeId } = req.body;
+    console.log('Creating team with data:', { name, description, challengeId }); // Debug log
 
-    // Check if the required fields are provided
-    if (!name) {
-      return res.status(400).json({ message: 'Team name is required' });
+    // Validate required fields
+    if (!name || !challengeId) {
+      return res.status(400).json({ 
+        message: 'Team name and challenge ID are required',
+        received: { name, challengeId }
+      });
     }
-    // Check if req.user is defined and contains an id
-  
+
+    // Validate user authentication
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ message: 'User authentication failed' });
     }
-    // Assuming the user ID is available from the authenticated JWT token
-    const userId = req.user.userId; 
 
-    // Create a new team with the given details
+    // Verify the challenge exists
+    const challenge = await Challenge.findById(challengeId);
+    if (!challenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+
+    const userId = req.user.userId;
+
     const newTeam = new Team({
       name,
       description,
-      members: [userId], // The creator is the first member of the team
+      challengeId,
+      members: [userId],
       createdBy: userId,
     });
 
-    // Save the new team in the database
     const savedTeam = await newTeam.save();
+    
+    // Populate the saved team with member details
+    const populatedTeam = await Team.findById(savedTeam._id)
+      .populate('members', 'name email')
+      .populate('createdBy', 'name email');
 
-    // Respond with the created team data
-    res.status(201).json({ message: 'Team created successfully', team: savedTeam });
+    res.status(201).json({
+      message: 'Team created successfully',
+      team: populatedTeam
+    });
   } catch (error) {
     console.error('Error creating team:', error);
-    res.status(500).json({ message: 'An error occurred while creating the team' });
+    res.status(500).json({ 
+      message: 'An error occurred while creating the team',
+      error: error.message 
+    });
   }
 };
 
@@ -182,6 +202,20 @@ export const deleteTeam = async (req, res) => {
     if (!team) return res.status(404).json({ message: 'Team not found' });
 
     res.status(200).json({ message: 'Team deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getTeamsByChallengeId = async (req, res) => {
+  const { challengeId } = req.params;
+
+  try {
+    const teams = await Team.find({ challengeId })
+      .populate('members', 'name email')
+      .populate('createdBy', 'name email');
+
+    res.status(200).json(teams);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

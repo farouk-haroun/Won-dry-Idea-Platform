@@ -8,6 +8,8 @@ import { API_BASE_URL } from '../utils/constants';
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const authError = useSelector(state => state.auth.error);
@@ -15,31 +17,43 @@ function Login() {
   useEffect(() => {
     // Clear any existing errors when the component mounts
     dispatch(clearError());
-  }, [dispatch]);
+    // Check if user is already logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/discover');
+    }
+  }, [dispatch, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     
     try {
-      // Make API call to login
-      const response = await axios.post(`${API_BASE_URL}/users/login`, { email, password });
+      const response = await axios.post(`${API_BASE_URL}/users/login`, { 
+        email, 
+        password 
+      });
       
-      // If login successful, update auth context and redirect to discover page
-      if (response.status === 200) {
+      if (response.data && response.data.token) {
+        // Store token in localStorage
+        localStorage.setItem('token', response.data.token);
+        
+        // Update auth state
         dispatch(login({
-          id: response.data.user.id,
-          name: response.data.user.name,
-          email: response.data.user.email,
+          user: response.data.user,
           token: response.data.token
         }));
         
+        // Navigate to discover page
         navigate('/discover');
-      } else {
-        throw new Error('Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);
-      dispatch(login({ error: 'Invalid credentials. Please try again.' }));
+      setError(error.response?.data?.message || 'Invalid credentials. Please try again.');
+      dispatch(clearError());
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,7 +67,12 @@ function Login() {
       {/* Right side with login form */}
       <div className="w-full md:w-1/2 flex justify-center items-center p-8">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-          {authError && <p className="text-red-500 mb-4">{authError}</p>}
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-2 text-left">Email</label>
@@ -81,9 +100,12 @@ function Login() {
             </div>
             <button
               type="submit"
-              className="w-full bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition duration-300 font-medium mb-4"
+              disabled={loading}
+              className={`w-full bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition duration-300 font-medium mb-4 ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              Non-VU Log In
+              {loading ? 'Logging in...' : 'Non-VU Log In'}
             </button>
             <button
               type="button"

@@ -12,6 +12,7 @@ function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -40,22 +41,39 @@ function Signup() {
       return;
     }
 
+    setLoading(true);
     try {
-      // Make API call to register the user
       const response = await axios.post(`${API_BASE_URL}/users/register`, {
         name: `${firstName} ${lastName}`,
         email,
-        password
+        password,
       });
-
-      // If registration is successful, log the user in
-      dispatch(login(response.data.user));
-
-      // Redirect to discover page
-      navigate('/discover');
-    } catch (error) {
-      console.error('Signup error:', error);
-      alert('Signup failed. Please try again.');
+      
+      if (response.data && response.data.token) {
+        // Store token in localStorage
+        localStorage.setItem('token', response.data.token);
+        
+        // Update auth state
+        dispatch(login({
+          user: response.data.user,
+          token: response.data.token
+        }));
+        
+        // Navigate to discover page
+        navigate('/discover');
+      }
+    } catch (signupError) {
+      if (signupError.response && signupError.response.data) {
+        // Log or display the specific error message from the backend
+        console.error('Signup error:', signupError.response.data.error);
+        console.error('Signup error with response:', signupError.response.data);
+        alert(`Signup failed: ${signupError.response.data.error}`);
+      } else {
+        console.error('Signup error:', signupError.message);
+        alert('Signup failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -154,7 +172,7 @@ function Signup() {
               type="submit"
               className="w-full bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition duration-300 font-medium mb-4"
             >
-              Sign Up
+              {loading ? 'Signing up...' : 'Sign Up'}
             </button>
           </form>
           <div className="mt-6 text-center">

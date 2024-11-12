@@ -20,17 +20,22 @@ export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    // Check if the user already exists
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ error: 'User already exists' }); // Use 'error' key for consistency
     }
+    
 
+    // Hash the password and create a confirmation token
     const hashedPassword = await bcrypt.hash(password, 10);
     const confirmationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
+    // Create and save the new user
     user = new User({ name, email, password: hashedPassword, confirmationToken });
     await user.save();
 
+    // Generate the confirmation link
     const confirmationLink = `http://localhost:5000/api/users/confirm-email?token=${confirmationToken}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -41,18 +46,32 @@ export const registerUser = async (req, res) => {
              <a href="${confirmationLink}">Confirm Email</a>`
     };
 
+    // Attempt to send the confirmation email
     try {
       await transporter.sendMail(mailOptions);
-    } catch (emailError) {
+      // If email sending is successful, send a standard success response
+      res.status(201).json({
+        message: 'User registered successfully.',
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+        },
+      });}
+       catch (emailError) {
+      // If email sending fails, log the error and notify the user
       console.error('Error sending email:', emailError.message);
-      return res.status(500).json({ message: 'Error sending confirmation email' });
+      res.status(201).json({
+        message: 'User registered successfully, but there was an error sending the confirmation email. Please contact support.',
+      });
     }
-    
-    res.status(201).json({ message: 'User registered successfully. Please check your email to confirm your account.' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    // Handle any other errors that occur during registration
+    console.error('Registration error:', error.message);
+    res.status(500).json({ message: 'An error occurred during registration. Please try again later.' });
   }
 };
+
 
 export const confirmEmail = async (req, res) => {
   const { token } = req.query;
@@ -207,13 +226,61 @@ export const updateUserProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
+    // Update fields
+    const updateFields = ['name', 'email', 'department', 'interests', 'skills'];
+    updateFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
 
     await user.save();
-    res.status(200).json({ message: 'Profile updated successfully', user });
+    
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        name: user.name || '',
+        email: user.email || '',
+        role: user.role || 'user',
+        department: user.department || '',
+        points: user.points || 0,
+        interests: user.interests || [],
+        skills: user.skills || [],
+        createdAt: user.createdAt
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ message: 'Error updating profile' });
+  }
+};
+
+// Add or update the getUserProfile function
+export const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return formatted user data
+    res.status(200).json({
+      id: user._id,
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'user',
+      department: user.department || '',
+      points: user.points || 0,
+      interests: user.interests || [],
+      skills: user.skills || [],
+      createdAt: user.createdAt
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Error fetching user profile' });
   }
 };
 
@@ -233,6 +300,8 @@ export const getUserById = async (req, res) => {
       email: user.email,
       createdAt: user.createdAt
     };
+
+    console.log(userData);
 
     res.status(200).json(userData);
   } catch (error) {

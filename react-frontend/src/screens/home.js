@@ -1,13 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Bell, Menu, Star, MessageCircle, Eye, Users, Flag, Lightbulb } from 'lucide-react';
+import { Search, Bell, Menu, Star, MessageCircle, Eye } from 'lucide-react';
 import ProfilePopup from '../components/ProfilePopup';
 import { useNavigate } from 'react-router-dom';
 import IdeaSpaceCard from '../components/IdeaSpaceCard';
+import { API_BASE_URL } from '../utils/constants';
 
 const Home = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [ideaSpaces, setIdeaSpaces] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [challenges, setChallenges] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch both idea spaces and challenges
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch idea spaces
+        const ideaSpacesResponse = await fetch(`${API_BASE_URL}/ideaspaces`);
+        const ideaSpacesData = await ideaSpacesResponse.json();
+
+        setIdeaSpaces(ideaSpacesData.ideaSpaces || []);
+
+        // Fetch challenges
+        const challengesResponse = await fetch(`${API_BASE_URL}/challenges/challenges`);
+        const challengesData = await challengesResponse.json();
+        setChallenges(challengesData.slice(0, 3) || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setIdeaSpaces([]);
+        setChallenges([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleLogout = () => {
     // Implement logout logic here
@@ -66,50 +98,75 @@ const Home = () => {
       <section className="py-12">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-[#874c9e] mb-8">Jump into some Challenges!</h2>
-          <div className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row">
-            <img src="https://images.pexels.com/photos/355952/pexels-photo-355952.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Challenge" className="w-full md:w-1/3 rounded-lg mb-6 md:mb-0 md:mr-6" />
-            <div className="md:w-2/3">
-              <h3 className="text-2xl font-bold mb-4">Idea Innovation Challenge</h3>
-              <p className="mb-4">
-                Join our latest challenge to revolutionize the way we interact with AI. Develop innovative solutions that bridge the gap between human creativity and machine intelligence.
-              </p>
-              <div className="flex items-center mb-4">
-                <span className="mr-2">Stage:</span>
-                <span className="bg-[#b49248] text-white px-3 py-1 rounded-full">Winners Announcement</span>
+          {isLoading ? (
+            <div className="text-center py-8">Loading challenges...</div>
+          ) : challenges.length > 0 ? (
+            challenges.map((challenge) => (
+              <div key={challenge._id} className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row mb-6">
+                <img 
+                  src={challenge.thumbnailUrl ? challenge.thumbnailUrl : "https://images.pexels.com/photos/355952/pexels-photo-355952.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"} 
+                  alt={challenge.title} 
+                  className="w-full md:w-1/3 rounded-lg mb-6 md:mb-0 md:mr-6 object-cover h-[250px]" 
+                />
+                <div className="md:w-2/3">
+                  <h3 className="text-2xl font-bold mb-4">{challenge.title}</h3>
+                  <p className="mb-4">{challenge.description}</p>
+                  <div className="flex items-center mb-4">
+                    <span className="mr-2">Status:</span>
+                    <span className={`px-3 py-1 rounded-full ${
+                      challenge.status === 'open' 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-red-500 text-white'
+                    }`}>
+                      {challenge.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-6">
+                    <div className="flex items-center">
+                      <Star className="w-5 h-5 text-[#5653a6] mr-1" />
+                      <span className="text-[#5653a6]">{challenge.stars || 0}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Eye className="w-5 h-5 text-[#5653a6] mr-1" />
+                      <span className="text-[#5653a6]">{challenge.views || 0}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <MessageCircle className="w-5 h-5 text-[#5653a6] mr-1" />
+                      <span className="text-[#5653a6]">{challenge.comments || 0}</span>
+                    </div>
+                  </div>
+                  <Link 
+                    to={`/challenges/${challenge._id}`}
+                    className="mt-4 inline-block bg-[#874c9e] text-white px-6 py-2 rounded-lg hover:bg-[#6e3d83] transition-colors"
+                  >
+                    View Challenge
+                  </Link>
+                </div>
               </div>
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center">
-                  <Star className="w-5 h-5 text-[#5653a6] mr-1" />
-                  <span className="text-[#5653a6]">34</span>
-                </div>
-                <div className="flex items-center">
-                  <Eye className="w-5 h-5 text-[#5653a6] mr-1" />
-                  <span className="text-[#5653a6]">23,696</span>
-                </div>
-                <div className="flex items-center">
-                  <MessageCircle className="w-5 h-5 text-[#5653a6] mr-1" />
-                  <span className="text-[#5653a6]">127</span>
-                </div>
-              </div>
-            </div>
-          </div>
+            ))
+          ) : (
+            <div className="text-center py-8">No challenges available</div>
+          )}
         </div>
       </section>
 
       {/* Discover Groups Section */}
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#874c9e] mb-8">Discover new groups and join in on exciting challenges!</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              "quantum-computing",
-              "sustainable-energy",
-              "biotech",
-              "space-exploration"
-            ].map((topic, index) => (
-              <IdeaSpaceCard key={index} topic={topic} />
-            ))}
-          </div>
+          <h2 className="text-3xl font-bold text-[#874c9e] mb-8">
+            Discover new groups and join in on exciting challenges!
+          </h2>
+          {isLoading ? (
+            <div className="text-center py-8">Loading...</div>
+          ) : ideaSpaces.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {ideaSpaces.map((ideaSpace) => (
+                <IdeaSpaceCard key={ideaSpace._id} ideaSpace={ideaSpace} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">No idea spaces found</div>
+          )}
         </div>
       </section>
 

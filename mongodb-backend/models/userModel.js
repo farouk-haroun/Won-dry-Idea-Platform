@@ -9,8 +9,11 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   confirmationToken: { type: String },
   points: { type: Number, default: 0 },
-  team: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }], // To support teams
+  department: { type: String },
+  team: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
   createdAt: { type: Date, default: Date.now },
+  interests: [String],
+  skills: [String]
 });
 
 const User = mongoose.model('User', userSchema);

@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+// src/screens/challenge.js
+
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Star, Share2, Search, Bell, Menu, Plus, Users, X } from 'lucide-react';
 import IdeaCard from '../components/IdeaCard';
 import ProfilePopup from '../components/ProfilePopup';
 import { Dialog, Transition } from '@headlessui/react';
+import { API_BASE_URL } from '../utils/constants';
+import axios from 'axios';
 
 const Challenge = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -12,51 +16,59 @@ const Challenge = () => {
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [isCreateTeamDialogOpen, setIsCreateTeamDialogOpen] = useState(false);
   const [newTeamData, setNewTeamData] = useState({ name: '', description: '' });
-  const [teams] = useState([
-    { _id: '1', name: 'Green Innovation', description: 'Working on sustainable solutions', members: ['John', 'Jane'] },
-    { _id: '2', name: 'Tech Warriors', description: 'Technology focused solutions', members: ['Mike', 'Sarah'] },
-    { _id: '3', name: 'Future Builders', description: 'Building for tomorrow', members: ['Alex', 'Emma'] },
-  ]);
+  const [teams, setTeams] = useState([]);
+  const [challenge, setChallenge] = useState({
+    title: '',
+    description: '',
+    format: '',
+    tracks: [],
+    stages: [],
+    organizers: [],
+    community: { name: "Wond'ry Innovation Center", avatar: '' },
+    metrics: null
+  });
+  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
 
-  // Test data
-  const challenge = {
-    title: "Commodore Cup 2023 Sustainability Challenge",
-    stages: [
-      { name: "1st Evaluation", status: "closed", ideasCount: 0, closedDate: "29 Apr 2023" },
-      { name: "2nd Round Evaluation", status: "closed", ideasCount: 0, closedDate: "29 Apr 2023" },
-      { name: "Final Showcase", status: "closed", ideasCount: 0, closedDate: "29 Apr 2023" },
-      { name: "Winners Announcement", status: "open", ideasCount: 0 },
-    ],
-    description: "We are thrilled to announce the inaugural Commodore Cup, a campus-wide design challenge hosted by the Wond'ry, Vanderbilt University's Innovation Center. The theme of the 2023 Commodore Cup is sustainability. This year's challenge is made possible in collaboration with the Vanderbilt University Division of Administration and Clearloop. Participation is open to all Vanderbilt University staff, students, and faculty, who can participate as individuals or teams of up to 4 people. No prior sustainability or design experience necessary!",
-    format: "The challenge has a hybrid format with touch points along the way to support participants through the process of prototyping their solution. Teams will have access to office hours, mentors, and advisors to help them flesh out their design and refine their final submission. We have also partnered with Dores Design so student designers can help bring your ideas to life. The challenge will culminate on November 16th where 5 selected finalists from each of the 2 design tracks will present their ideas in-person to a panel of judges for an opportunity to win cash prizes.",
-    tracks: ["Transportation", "Sustainability Dashboard"],
-    organizers: [
-      { name: "John Doe", avatar: "https://randomuser.me/api/portraits/men/1.jpg" },
-      { name: "Samantha Pene", avatar: "https://randomuser.me/api/portraits/women/2.jpg" },
-      { name: "Michael Sybil", avatar: "https://randomuser.me/api/portraits/men/3.jpg" },
-      { name: "Jane Doe", avatar: "https://randomuser.me/api/portraits/women/4.jpg" },
-    ],
-    community: {
-      name: "Wondry Quantum Studio",
-      avatar: "https://randomuser.me/api/portraits/lego/1.jpg"
-    },
-    metrics: {
-      views: 521,
-      totalIdeas: 521,
-      activeUsers: 521
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching data for challenge:', id);
+  
+        const [challengeRes, teamsRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/challenges/${id}`),
+        ]);
+  
+        const challengeData = challengeRes.data;
+        if (!challengeData.community) {
+          challengeData.community = { name: "Wond'ry Innovation Center", avatar: '' };
+        }
+        setChallenge(challengeData);
+      } catch (error) {
+        // If the error is 404 specifically for teams, handle it differently
+        if (error.response?.status === 404 && error.config?.url.includes('/teams')) {
+          console.log('No teams endpoint available for this challenge.');
+          setTeams([]);  // Set teams to an empty array if endpoint not found
+        } else {
+          console.error('Error fetching data:', error.response || error);
+          alert('Error loading challenge data: ' + 
+            (error.response?.data?.message || error.message) +
+            '\nStatus: ' + error.response?.status +
+            '\nEndpoint: ' + error.config?.url);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    if (id) {
+      fetchData();
     }
-  };
-
-  // Test ideas data
-  const ideas = [
-    { title: "Solar-Powered Campus Shuttles", category: "Transportation", stage: "Final Showcase", author: "Team Green", comments: 15, views: 230, ideas: 3, rating: 4 },
-    { title: "AI-Driven Energy Optimization", category: "Sustainability Dashboard", stage: "2nd Round Evaluation", author: "Tech Innovators", comments: 22, views: 180, ideas: 5, rating: 5 },
-    { title: "Bike-Sharing Program", category: "Transportation", stage: "1st Evaluation", author: "Eco Riders", comments: 8, views: 120, ideas: 2, rating: 3 },
-  ];
+  }, [id]);
+  
 
   const handleLogout = () => {
-    // Implement logout logic here
-    // For example: clear local storage, reset auth state, etc.
     navigate('/login');
   };
 
@@ -68,19 +80,65 @@ const Challenge = () => {
     setIsTeamDialogOpen(true);
   };
 
-  const handleCreateTeam = (e) => {
+  const handleCreateTeam = async (e) => {
     e.preventDefault();
-    // Here you would typically make an API call to create the team
-    console.log('Creating team:', newTeamData);
-    setIsCreateTeamDialogOpen(false);
-    setNewTeamData({ name: '', description: '' });
+    try {
+      await axios.post(`${API_BASE_URL}/teams`, {
+        ...newTeamData,
+        challengeId: id
+      });
+      const teamsRes = await axios.get(`${API_BASE_URL}/challenges/${id}/teams`);
+      setTeams(teamsRes.data);
+      setIsCreateTeamDialogOpen(false);
+      setNewTeamData({ name: '', description: '' });
+      alert('Team created successfully');
+    } catch (error) {
+      console.error('Error creating team:', error);
+      alert('Error creating team: ' + error.message);
+    }
   };
 
-  const handleJoinTeam = (teamId) => {
-    // Here you would typically make an API call to join the team
-    console.log('Joining team:', teamId);
-    setIsTeamDialogOpen(false);
+  const handleJoinTeam = async (teamId) => {
+    try {
+      await axios.post(`${API_BASE_URL}/teams/${teamId}/join`);
+      setIsTeamDialogOpen(false);
+      alert('Joined team successfully');
+    } catch (error) {
+      console.error('Error joining team:', error);
+    }
   };
+
+  const renderStages = () => {
+    return (challenge.stages || []).map((stage, index) => {
+      const isOpen = new Date(stage.deadline) > new Date();
+      const submissionsCount = stage.submissions?.length || 0;
+      const closedDate = new Date(stage.deadline).toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+
+      return (
+        <div key={index} className={`p-4 rounded-md ${isOpen ? 'bg-green-100' : 'bg-gray-100'}`}>
+          <h3 className="font-semibold mb-1">{stage.name}</h3>
+          <p className="text-sm text-gray-600">{submissionsCount} Submissions</p>
+          <p className="text-sm text-gray-600">
+            {isOpen ? 'Open' : `Closed ${closedDate}`}
+          </p>
+        </div>
+      );
+    });
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  const ideas = [
+    { title: "Solar-Powered Campus Shuttles", category: "Transportation", stage: "Final Showcase", author: "Team Green", comments: 15, views: 230, ideas: 3, rating: 4 },
+    { title: "AI-Driven Energy Optimization", category: "Sustainability Dashboard", stage: "2nd Round Evaluation", author: "Tech Innovators", comments: 22, views: 180, ideas: 5, rating: 5 },
+    { title: "Bike-Sharing Program", category: "Transportation", stage: "1st Evaluation", author: "Eco Riders", comments: 8, views: 120, ideas: 2, rating: 3 },
+  ];
 
   return (
     <div className="bg-white">
@@ -136,15 +194,7 @@ const Challenge = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          {challenge.stages.map((stage, index) => (
-            <div key={index} className={`p-4 rounded-md ${stage.status === 'open' ? 'bg-green-100' : 'bg-gray-100'}`}>
-              <h3 className="font-semibold mb-1">{stage.name}</h3>
-              <p className="text-sm text-gray-600">{stage.ideasCount} Ideas</p>
-              <p className="text-sm text-gray-600">
-                {stage.status === 'open' ? 'Open' : `Closed ${stage.closedDate}`}
-              </p>
-            </div>
-          ))}
+          {renderStages()}
         </div>
 
         <div className="flex mb-8">
@@ -165,46 +215,53 @@ const Challenge = () => {
         {activeTab === 'overview' ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="col-span-2">
-              <h2 className="text-xl font-bold mb-4">Welcome to the {challenge.title}!</h2>
+              <h2 className="text-xl font-bold mb-4">Welcome to {challenge.title}!</h2>
               <p className="mb-4">{challenge.description}</p>
               <p className="mb-4">{challenge.format}</p>
-              <p className="mb-4">Participating individuals and teams will submit a design for one of the following design challenge tracks (see more details on each track under 2023 Challenge Details below):</p>
-              <ol className="list-decimal list-inside mb-4">
-                {challenge.tracks.map((track, index) => (
-                  <li key={index}>{track}</li>
-                ))}
-              </ol>
+              {challenge.tracks && challenge.tracks.length > 0 && (
+                <>
+                  <p className="mb-4">Participating individuals and teams will submit a design for one of the following design challenge tracks:</p>
+                  <ol className="list-decimal list-inside mb-4">
+                    {challenge.tracks.map((track, index) => (
+                      <li key={index}>{track}</li>
+                    ))}
+                  </ol>
+                </>
+              )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Challenge Organizers</h3>
-              <div className="grid grid-cols-2 gap-2 mb-8">
-                {challenge.organizers.map((organizer, index) => (
-                  <div key={index} className="flex items-center bg-gray-100 rounded-full py-2 px-4">
-                    <img src={organizer.avatar} alt={organizer.name} className="w-8 h-8 rounded-full mr-2" />
-                    <span className="text-sm">{organizer.name}</span>
+              {challenge.community && (
+                <>
+                  <h3 className="text-lg font-semibold mb-4">Community</h3>
+                  <div className="bg-gray-100 rounded-md p-4 mb-8 text-center">
+                    <img 
+                      src={challenge.community.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(challenge.community.name || '')}`} 
+                      alt={challenge.community.name} 
+                      className="w-16 h-16 rounded-full mx-auto mb-2" 
+                    />
+                    <p>{challenge.community.name}</p>
                   </div>
-                ))}
-              </div>
-              <h3 className="text-lg font-semibold mb-4">Community</h3>
-              <div className="bg-gray-100 rounded-md p-4 mb-8 text-center">
-                <img src={challenge.community.avatar} alt={challenge.community.name} className="w-16 h-16 rounded-full mx-auto mb-2" />
-                <p>{challenge.community.name}</p>
-              </div>
-              <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold">{challenge.metrics.views}</p>
-                  <p className="text-sm text-gray-600">views</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold">{challenge.metrics.totalIdeas}</p>
-                  <p className="text-sm text-gray-600">total ideas</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold">{challenge.metrics.activeUsers}</p>
-                  <p className="text-sm text-gray-600">active users</p>
-                </div>
-              </div>
+                </>
+              )}
+              {challenge.metrics && (
+                <>
+                  <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">{challenge.metrics.views || 0}</p>
+                      <p className="text-sm text-gray-600">views</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">{challenge.metrics.totalIdeas || 0}</p>
+                      <p className="text-sm text-gray-600">total ideas</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">{challenge.metrics.activeUsers || 0}</p>
+                      <p className="text-sm text-gray-600">active users</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -286,7 +343,7 @@ const Challenge = () => {
                       className="w-full flex items-center justify-center space-x-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-gray-500 hover:text-gray-700 hover:border-gray-400"
                     >
                       <Plus className="w-5 h-5" />
-                      <span>Create New Team</span>
+                      <span>Create New Idea</span>
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -323,7 +380,7 @@ const Challenge = () => {
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                   <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                    Create New Team
+                    Create New Idea
                   </Dialog.Title>
                   <button
                     onClick={() => setIsCreateTeamDialogOpen(false)}
@@ -358,7 +415,7 @@ const Challenge = () => {
                         type="submit"
                         className="w-full inline-flex justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
                       >
-                        Create Team
+                        Create Idea
                       </button>
                     </div>
                   </form>

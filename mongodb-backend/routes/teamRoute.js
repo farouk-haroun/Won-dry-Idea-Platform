@@ -9,6 +9,7 @@ import {
   getAllTeams,
   removeMemberFromTeam,
   deleteTeam,
+  getTeamsByChallengeId,
 } from '../controllers/teamController.js';
 import { authenticateJWT } from '../middleware/authenticate.js';
 
@@ -27,5 +28,7 @@ router.post('/:teamId/remove-member', authenticateJWT, removeMemberFromTeam); //
 // Message routes
 router.post('/:teamId/messages', authenticateJWT, sendMessageToTeam); // Send a message within a team
 router.get('/:teamId/messages', authenticateJWT, getTeamMessages); // Get all messages for a team
+
+router.get('/challenge/:challengeId', getTeamsByChallengeId);
 
 export default router;
