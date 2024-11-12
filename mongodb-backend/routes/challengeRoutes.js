@@ -15,20 +15,17 @@ const router = express.Router();
 router.post('/challenges', createChallenge);  // File upload handled here
 router.get('/challenges', getAllChallenges);
 
-router.post('/', ...createChallenge);  // Spread the middleware array
+router.post('/', createChallenge);  // File upload handled in controller
 router.get('/', getAllChallenges);
 
 // router.post('/challenges/:challengeId/stages/:stageId/submissions', addSubmission);
-// router.get('/search', searchChallenges);
+ router.get('/search', searchChallenges);
 // Delete route
-router.delete('/:id', deleteChallenge);
+router.delete('/challenges/:id', deleteChallenge);
 router.get('/search', searchChallenges);
-
-router.get('/:id', getChallengeById);  // /api/challenges/:id
-router.get('/:id/teams', getChallengeTeams); 
-
+router.get('/:id', getChallengeById);
+router.get('/:id/teams', getChallengeTeams);
+router.delete('/:id', deleteChallenge);
 router.patch('/:id/view', incrementViewCount);
-router.patch('/:id/archive', archiveChallenge);
-
 
 export default router;

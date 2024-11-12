@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 5000;
 import ideaRoutes from './routes/ideaRoute.js';
 import userRoutes from './routes/userRoute.js';
 import teamRoutes from './routes/teamRoute.js';
-import challengeRoutes from './routes/challengeRoute.js';
+import challengeRoutes from './routes/challengeRoutes.js';
 
 // Middleware to parse JSON
 app.use(express.json());
