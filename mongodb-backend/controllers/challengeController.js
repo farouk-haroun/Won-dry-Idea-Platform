@@ -7,15 +7,28 @@ import 'dotenv/config';
  
 
 // Get all challenges
+// Get all challenges with sorting options
 export const getAllChallenges = async (req, res) => {
   try {
-    const challenges = await Challenge.find().populate('organizers stages.submissions');
+    const { sortBy } = req.query; // Capture the sortBy parameter
+
+    // Define sorting criteria based on query
+    let sortCriteria = { createdAt: -1 }; // Default to sort by most recent
+    if (sortBy === 'date') {
+      sortCriteria = { createdAt: -1 }; // Sort by newest created date
+    } else if (sortBy === 'popularity') {
+      sortCriteria = { viewCounts: -1 }; // Sort by highest view counts
+    }
+
+    const challenges = await Challenge.find()
+      .sort(sortCriteria) // Apply the sorting criteria
+      .populate('organizers stages.submissions');
+    
     res.status(200).json(challenges);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 // Create a new challenge with S3 file upload
 export const createChallenge = [
   upload.single('thumbnail'),
@@ -84,20 +97,51 @@ export const deleteChallenge = async (req, res) => {
   }
 };
 
+// Search challenges with sorting options
 export const searchChallenges = async (req, res) => {
   try {
-    const { title } = req.query;
+    const { title, sortBy } = req.query;
 
     if (!title) {
       return res.status(400).json({ message: 'Title query parameter is required' });
     }
 
-    // Case-insensitive search using regular expressions
+    // Define sorting criteria based on query
+    let sortCriteria = { createdAt: -1 }; // Default to sort by most recent
+    if (sortBy === 'date') {
+      sortCriteria = { createdAt: -1 }; // Sort by newest created date
+    } else if (sortBy === 'popularity') {
+      sortCriteria = { viewCounts: -1 }; // Sort by highest view counts
+    }
+
     const challenges = await Challenge.find({
       title: { $regex: title, $options: 'i' } // 'i' for case-insensitive search
-    }).populate('organizers stages.submissions');
+    })
+      .sort(sortCriteria) // Apply the sorting criteria
+      .populate('organizers stages.submissions');
 
     res.status(200).json(challenges);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const incrementViewCount = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the challenge by ID and increment the viewCounts field
+    const updatedChallenge = await Challenge.findByIdAndUpdate(
+      id,
+      { $inc: { viewCounts: 1 } },  // $inc operator to increment viewCounts by 1
+      { new: true }  // Return the updated document
+    );
+
+    if (!updatedChallenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+
+    res.status(200).json(updatedChallenge);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

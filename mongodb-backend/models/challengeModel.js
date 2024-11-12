@@ -20,6 +20,7 @@ const challengeSchema = new mongoose.Schema({
     enum: ['SUSTAINABILITY', 'SOCIAL INNOVATION', 'TECHNOLOGY', 'HEALTHCARE', 'EDUCATION'],
     required: true,
   },
+  viewCounts: { type: Number, default: 0 }, 
 });
 
 const Challenge = mongoose.model('Challenge', challengeSchema);

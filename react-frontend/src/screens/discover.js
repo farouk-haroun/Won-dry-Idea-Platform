@@ -45,9 +45,11 @@ const Discover = () => {
   //   }
   // }, [searchQuery]);
   
-  const fetchChallenges = async () => {
+  const fetchChallenges = async (sortBy) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/challenges/challenges`);
+      const response = await axios.get(`${API_BASE_URL}/challenges/challenges`, {
+        params: { sortBy },
+      });
       // console.log(response.data);
       
       setChallenges(response.data);
@@ -55,17 +57,28 @@ const Discover = () => {
       console.error('Error fetching challenges:', error);
     }
   };
-  const searchChallenges = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/challenges/challenges/search`, {
-        params: { title: searchQuery },
-      });
-      setChallenges(response.data); // Update challenges based on search results
-    } catch (error) {
-      console.error('Error searching challenges:', error);
-    }
-  };
-  
+  // Search challenges with sorting
+const searchChallenges = async (sortBy) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/challenges/search`, {
+      params: { title: searchQuery, sortBy },
+    });
+    setChallenges(response.data);
+  } catch (error) {
+    console.error('Error searching challenges:', error);
+  }
+};
+
+// Handle sort change
+const handleSortChange = (e) => {
+  const sortBy = e.target.value;
+  if (searchQuery) {
+    searchChallenges(sortBy);
+  } else {
+    fetchChallenges(sortBy);
+  }
+};
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim() === '') {
@@ -195,11 +208,11 @@ const Discover = () => {
 
           <div className="flex items-center space-x-2">
             <span className="text-gray-600 text-sm">Sort By:</span>
-            <select className="border rounded-full px-2 py-1 text-sm">
-              <option>Relevance</option>
-              <option>Date</option>
-              <option>Popularity</option>
-            </select>
+            <select onChange={handleSortChange} className="border rounded-full px-2 py-1 text-sm">
+  <option value="date">Date</option>
+  <option value="popularity">Popularity</option>
+</select>
+
           </div>
           <button 
             className="text-purple-600 text-sm font-medium flex items-center"
