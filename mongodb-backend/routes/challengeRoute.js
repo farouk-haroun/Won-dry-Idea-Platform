@@ -17,5 +17,6 @@ router.delete('/challenges/:id', deleteChallenge);
 router.get('/search', searchChallenges);
 
 router.patch('/:id/view', incrementViewCount);
+router.get('/challenges/:id/teams', getTeamsByChallenge);
 
 export default router;
