@@ -11,7 +11,10 @@ import AdminCreateChallengePopup from '../components/AdminCreateChallengePopup';
 const Discover = () => {
   const [selectedOptions, setSelectedOptions] = useState(['Challenges']);
   const [challenges, setChallenges] = useState([]);
+  
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [filterOptions, setFilterOptions] = useState({
     myContent: false,
     followedContent: false,
@@ -28,20 +31,65 @@ const Discover = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchChallenges();
-  }, []);
+    // If searchQuery is empty, fetch all challenges; otherwise, search
+    if (searchQuery.trim() === '') {
+      fetchChallenges();
+    } else {
+      searchChallenges();
+    }
+  }, [searchQuery]);
 
-  const fetchChallenges = async () => {
+  // useEffect(() => {
+  //   if (searchQuery === '') {
+  //     fetchChallenges();
+  //   }
+  // }, [searchQuery]);
+  
+  const fetchChallenges = async (sortBy) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/challenges/challenges`);
-      console.log(response.data);
+      const response = await axios.get(`${API_BASE_URL}/challenges/challenges`, {
+        params: { sortBy },
+      });
+      // console.log(response.data);
       
       setChallenges(response.data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
     }
   };
+  // Search challenges with sorting
+const searchChallenges = async (sortBy) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/challenges/search`, {
+      params: { title: searchQuery, sortBy },
+    });
+    setChallenges(response.data);
+  } catch (error) {
+    console.error('Error searching challenges:', error);
+  }
+};
 
+// Handle sort change
+const handleSortChange = (e) => {
+  const sortBy = e.target.value;
+  if (searchQuery) {
+    searchChallenges(sortBy);
+  } else {
+    fetchChallenges(sortBy);
+  }
+};
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim() === '') {
+      fetchChallenges(); // Show all challenges if search query is empty
+    } else {
+      searchChallenges();
+    }
+  };
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
   const isSelected = (option) => selectedOptions.includes(option);
 
   const toggleOption = (option) => {
@@ -143,21 +191,28 @@ const Discover = () => {
           </button>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Looking for Something?"
-              className="border rounded-lg px-4 py-2 pr-10 text-sm w-64"
-            />
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-          </div>
+        <div className="relative">
+  <form onSubmit={handleSearchSubmit}>
+    <input
+      type="text"
+      placeholder="Looking for Something?"
+      value={searchQuery}
+      onChange={handleSearchChange}
+      className="border rounded-lg px-4 py-2 pr-10 text-sm w-64"
+    />
+    <button type="submit" className="absolute right-3 top-1/2 transform -translate-y-1/2">
+      <Search className="text-gray-500 w-5 h-5" />
+    </button>
+  </form>
+</div>
+
           <div className="flex items-center space-x-2">
             <span className="text-gray-600 text-sm">Sort By:</span>
-            <select className="border rounded-full px-2 py-1 text-sm">
-              <option>Relevance</option>
-              <option>Date</option>
-              <option>Popularity</option>
-            </select>
+            <select onChange={handleSortChange} className="border rounded-full px-2 py-1 text-sm">
+  <option value="date">Date</option>
+  <option value="popularity">Popularity</option>
+</select>
+
           </div>
           <button 
             className="text-purple-600 text-sm font-medium flex items-center"
