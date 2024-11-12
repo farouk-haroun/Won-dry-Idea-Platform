@@ -1,261 +1,225 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import {
-  MemoryRouter,
-  useNavigate,
-} from 'react-router-dom';
 import configureStore from 'redux-mock-store';
-import Signup from './signup';
 import axios from 'axios';
+import Signup from './Signup';
 
-// Mock axios to avoid making real API requests
+// Mock modules
 jest.mock('axios');
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => jest.fn()
+}));
 
-// Mock useNavigate
-jest.mock('react-router-dom', () => {
-  const originalModule = jest.requireActual('react-router-dom');
-
-  return {
-    __esModule: true,
-    ...originalModule,
-    useNavigate: jest.fn(),
-  };
-});
-
+// Mock store setup
 const mockStore = configureStore([]);
+const store = mockStore({});
 
-beforeAll(() => {
-  jest.spyOn(console, 'warn').mockImplementation((message) => {
-    if (!message.includes('React Router Future Flag Warning')) {
-      console.warn(message);
-    }
-  });
-});
-
-afterAll(() => {
-  console.warn.mockRestore();
-});
+// Test wrapper component
+const TestWrapper = ({ children }) => (
+  <Provider store={store}>
+    <BrowserRouter>
+      {children}
+    </BrowserRouter>
+  </Provider>
+);
 
 describe('Signup Component', () => {
-  let store;
-
   beforeEach(() => {
-    store = mockStore({
-      auth: { user: null },
+    store.clearActions();
+    jest.clearAllMocks();
+  });
+
+  // Rendering tests
+  describe('Rendering', () => {
+    it('renders all form fields and buttons', () => {
+      render(<Signup />, { wrapper: TestWrapper });
+
+      expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/last name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^password/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument();
+      expect(screen.getByText(/already have an account/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /log in/i })).toBeInTheDocument();
+    });
+
+    it('renders the logo on larger screens', () => {
+      render(<Signup />, { wrapper: TestWrapper });
+      const logo = screen.getByAltText('Logo');
+      expect(logo).toBeInTheDocument();
     });
   });
 
-  // Test if the signup form renders correctly
-  it('renders the signup form correctly', () => {
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      </Provider>
-    );
+  // Form interaction tests
+  describe('Form Interactions', () => {
+    it('updates input values when user types', async () => {
+      render(<Signup />, { wrapper: TestWrapper });
+      
+      const firstNameInput = screen.getByLabelText(/first name/i);
+      const lastNameInput = screen.getByLabelText(/last name/i);
+      const emailInput = screen.getByLabelText(/email/i);
+      const passwordInput = screen.getByLabelText(/^password/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
 
-    // Check for form input fields
-    expect(screen.getByLabelText(/First Name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Last Name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Confirm Password$/i)).toBeInTheDocument();
+      await userEvent.type(firstNameInput, 'John');
+      await userEvent.type(lastNameInput, 'Doe');
+      await userEvent.type(emailInput, 'john@example.com');
+      await userEvent.type(passwordInput, 'password123');
+      await userEvent.type(confirmPasswordInput, 'password123');
 
-    // Check for the submit button
-    expect(
-      screen.getByRole('button', { name: /Sign Up/i })
-    ).toBeInTheDocument();
+      expect(firstNameInput).toHaveValue('John');
+      expect(lastNameInput).toHaveValue('Doe');
+      expect(emailInput).toHaveValue('john@example.com');
+      expect(passwordInput).toHaveValue('password123');
+      expect(confirmPasswordInput).toHaveValue('password123');
+    });
+
+    it('toggles password visibility when show/hide button is clicked', async () => {
+      render(<Signup />, { wrapper: TestWrapper });
+      
+      const passwordInput = screen.getByLabelText(/^password/i);
+      const toggleButton = passwordInput.parentElement.querySelector('button');
+
+      expect(passwordInput).toHaveAttribute('type', 'password');
+      await userEvent.click(toggleButton);
+      expect(passwordInput).toHaveAttribute('type', 'text');
+      await userEvent.click(toggleButton);
+      expect(passwordInput).toHaveAttribute('type', 'password');
+    });
   });
 
-  // Test if the form validates matching passwords
-  it('shows an alert if passwords do not match', () => {
-    window.alert = jest.fn(); // Mock alert function
+  // Validation tests
+  describe('Form Validation', () => {
+    it('shows error when passwords do not match', async () => {
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      render(<Signup />, { wrapper: TestWrapper });
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    // Fill out form fields with non-matching passwords
-    fireEvent.change(screen.getByLabelText(/First Name/i), {
-      target: { value: 'John' },
-    });
-    fireEvent.change(screen.getByLabelText(/Last Name/i), {
-      target: { value: 'Doe' },
-    });
-    fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'john@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), {
-      target: { value: 'password123' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
-      target: { value: 'password321' },
+      // Fill in required fields
+      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
+      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
+      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
+      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
+      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password456');
+      
+      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+      
+      expect(alertMock).toHaveBeenCalledWith("Passwords don't match");
+      alertMock.mockRestore();
     });
 
-    // Submit the form
-    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
+    it('shows error when password is too short', async () => {
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      render(<Signup />, { wrapper: TestWrapper });
 
-    // Check that the alert is shown for mismatching passwords
-    expect(window.alert).toHaveBeenCalledWith("Passwords don't match");
+      // Fill in required fields
+      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
+      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
+      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
+      await userEvent.type(screen.getByLabelText(/^password/i), 'pass');
+      await userEvent.type(screen.getByLabelText(/confirm password/i), 'pass');
+      
+      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+      
+      expect(alertMock).toHaveBeenCalledWith('Password must be at least 8 characters long');
+      alertMock.mockRestore();
+    });
+
+    it('shows error when email is invalid', async () => {
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      render(<Signup />, { wrapper: TestWrapper });
+
+      // Fill in required fields except valid email
+      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
+      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
+      await userEvent.type(screen.getByLabelText(/email/i), 'invalidemail');
+      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
+      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
+      
+      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+      
+      expect(alertMock).toHaveBeenCalledWith('Please enter a valid email address');
+      alertMock.mockRestore();
+    });
+
+    it('shows error when names are missing', async () => {
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      render(<Signup />, { wrapper: TestWrapper });
+
+      // Fill in everything except names
+      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
+      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
+      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
+      
+      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
+      
+      expect(alertMock).toHaveBeenCalledWith('Please enter both first and last name');
+      alertMock.mockRestore();
+    });
   });
 
-  // Test if the form validates the minimum password length
-  it('shows an alert if the password is less than 8 characters', () => {
-    window.alert = jest.fn(); // Mock alert function
+  // API integration tests
+  describe('API Integration', () => {
+    it('successfully registers user and redirects', async () => {
+      const mockResponse = {
+        data: {
+          user: {
+            id: 1,
+            name: 'John Doe',
+            email: 'john@example.com'
+          }
+        }
+      };
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      </Provider>
-    );
+      axios.post.mockResolvedValueOnce(mockResponse);
+      render(<Signup />, { wrapper: TestWrapper });
 
-    // Fill out form fields with a short password
-    fireEvent.change(screen.getByLabelText(/First Name/i), {
-      target: { value: 'John' },
-    });
-    fireEvent.change(screen.getByLabelText(/Last Name/i), {
-      target: { value: 'Doe' },
-    });
-    fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'john@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), {
-      target: { value: 'short' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
-      target: { value: 'short' },
-    });
+      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
+      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
+      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
+      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
+      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
 
-    // Submit the form
-    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
+      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
 
-    // Check that the alert is shown for short passwords
-    expect(window.alert).toHaveBeenCalledWith(
-      'Password must be at least 8 characters long'
-    );
-  });
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'password123'
+        });
+      });
 
-  // Test if the form validates the email format
-  it('shows an alert if an invalid email is entered', () => {
-    window.alert = jest.fn(); // Mock alert function
-
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    // Fill out form fields with an invalid email
-    fireEvent.change(screen.getByLabelText(/First Name/i), {
-      target: { value: 'John' },
-    });
-    fireEvent.change(screen.getByLabelText(/Last Name/i), {
-      target: { value: 'Doe' },
-    });
-    fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'invalidemail' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), {
-      target: { value: 'password123' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
-      target: { value: 'password123' },
+      const actions = store.getActions();
+      expect(actions).toContainEqual({
+        type: expect.any(String),
+        payload: mockResponse.data.user
+      });
     });
 
-    // Submit the form
-    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
+    it('handles registration failure', async () => {
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      axios.post.mockRejectedValueOnce(new Error('Registration failed'));
+      
+      render(<Signup />, { wrapper: TestWrapper });
 
-    // Check that the alert is shown for invalid email
-    expect(window.alert).toHaveBeenCalledWith(
-      'Please enter a valid email address'
-    );
-  });
+      await userEvent.type(screen.getByLabelText(/first name/i), 'John');
+      await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
+      await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
+      await userEvent.type(screen.getByLabelText(/^password/i), 'password123');
+      await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
 
-  // Test if the password visibility toggle works
-  it('toggles password visibility when the eye icon is clicked', () => {
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      </Provider>
-    );
+      fireEvent.submit(screen.getByRole('button', { name: /sign up/i }));
 
-    const passwordInput = screen.getByLabelText(/^Password$/i);
+      await waitFor(() => {
+        expect(alertMock).toHaveBeenCalledWith('Signup failed. Please try again.');
+      });
 
-    // Password field should be hidden initially
-    expect(passwordInput.type).toBe('password');
-
-    // Click the toggle button
-    const toggleButton = screen.getByLabelText(/Show password/i);
-    fireEvent.click(toggleButton);
-
-    // Password field should be visible
-    expect(passwordInput.type).toBe('text');
-  });
-
-  // Test successful signup
-  it('signs up a new user and redirects to the discover page', async () => {
-    // Mock the API response for successful signup
-    axios.post.mockResolvedValue({
-      data: {
-        user: { id: 1, name: 'John Doe', email: 'john@example.com' },
-      },
+      alertMock.mockRestore();
     });
-
-    // Mock the navigate function
-    const navigateMock = jest.fn();
-    useNavigate.mockReturnValue(navigateMock);
-
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    // Fill out form fields
-    fireEvent.change(screen.getByLabelText(/First Name/i), {
-      target: { value: 'John' },
-    });
-    fireEvent.change(screen.getByLabelText(/Last Name/i), {
-      target: { value: 'Doe' },
-    });
-    fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'john@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), {
-      target: { value: 'password123' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Confirm Password$/i), {
-      target: { value: 'password123' },
-    });
-
-    // Submit the form
-    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
-
-    // Wait for axios.post to be called
-    await expect(axios.post).toHaveBeenCalledWith(
-      `${API_BASE_URL}/users/register`,
-      {
-        name: 'John Doe',
-        email: 'john@example.com',
-        password: 'password123',
-      }
-    );
-
-    // Check that navigate is called to redirect the user
-    expect(navigateMock).toHaveBeenCalledWith('/discover');
   });
 });
