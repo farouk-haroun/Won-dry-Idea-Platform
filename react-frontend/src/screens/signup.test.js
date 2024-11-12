@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import axios from 'axios';
-import Signup from './Signup';
+import Signup from './signup';
 
 // Mock modules
 jest.mock('axios');

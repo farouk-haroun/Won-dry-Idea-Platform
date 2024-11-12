@@ -111,20 +111,6 @@ describe('ChallengeIdea Component', () => {
 
   // Navigation tests
   describe('Navigation', () => {
-    // test('back button triggers navigation', () => {
-    //   renderWithRouter(
-    //     <ChallengeIdea 
-    //       idea={mockIdea} 
-    //       isLoading={false}
-    //     />
-    //   );
-      
-    //   // Use a more specific selector for the back button
-    //   const backButton = screen.getByRole('button', { name: '' });
-    //   fireEvent.click(backButton);
-    //   expect(mockNavigate).toHaveBeenCalledWith(-1);
-    // });
-
     test('idea board button navigates to idea page', () => {
       renderWithRouter(
         <ChallengeIdea 
