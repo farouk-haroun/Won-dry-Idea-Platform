@@ -5,7 +5,7 @@ import store from './store';
 import Home from './screens/home';
 import Discover from './screens/discover';
 import Login from './screens/login';
-import Signup from './screens/Signup.js';
+import Signup from './screens/signup.js';
 import Challenge from './screens/challenge';
 import Idea from './screens/idea.js';
 import ChallengeIdea from './screens/challenge_idea';
