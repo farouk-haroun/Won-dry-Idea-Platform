@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "jsdom-testing-mocks": "^1.13.1"
+  }
+}
