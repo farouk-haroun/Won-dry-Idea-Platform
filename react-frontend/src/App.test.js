@@ -53,7 +53,7 @@ jest.mock('./screens/login', () => {
   };
 });
 
-jest.mock('./screens/Signup', () => {
+jest.mock('./screens/signup', () => {
   return function Signup() {
     return (
       <div data-testid="signup-screen">
