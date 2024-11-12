@@ -2,25 +2,11 @@ import React from 'react';
 import { Star, MessageCircle, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const IdeaCard = ({ id, title, category, stage, author, comments, views, ideas, rating }) => {
+const IdeaCard = ({ title, category, stage, author, comments, views, ideas, rating }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/challenge_idea/${id}`, {
-      state: {
-        idea: {
-          id,
-          title,
-          category,
-          stage,
-          author,
-          comments,
-          views,
-          ideas,
-          rating
-        }
-      }
-    });
+    navigate('/challenge_idea');
   };
 
   return (
@@ -29,17 +15,10 @@ const IdeaCard = ({ id, title, category, stage, author, comments, views, ideas, 
       onClick={handleClick}
     >
       <div className="relative">
-        <img 
-          src="https://images.pexels.com/photos/355952/pexels-photo-355952.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
-          alt="Idea" 
-          className="w-full h-[256px] object-cover" 
-        />
+        <img src="https://images.pexels.com/photos/355952/pexels-photo-355952.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Idea" className="w-full h-[256px] object-cover" />
         <button 
           className="absolute top-2 right-2 bg-white rounded-full p-1 shadow w-12 h-12 flex items-center justify-center"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Add favorite/star functionality here
-          }}
+          onClick={(e) => e.stopPropagation()}
         >
           <Star className="text-gray-400 w-5 h-5" />
         </button>
@@ -57,37 +36,34 @@ const IdeaCard = ({ id, title, category, stage, author, comments, views, ideas, 
         )}
         {author && (
           <p className="mb-2">
-            <span className="bg-gray-800 text-white text-sm px-2 py-1 rounded-full">
-              {author}
-            </span>
+            <span className="bg-gray-800 text-white text-sm px-2 py-1 rounded-full">{author}</span>
           </p>
         )}
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-          <div className="flex items-center space-x-4">
-            {comments !== undefined && (
+        {(comments !== undefined || views !== undefined || ideas !== undefined) && (
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <div className="flex items-center space-x-4">
+              {comments !== undefined && (
+                <span className="flex items-center">
+                  <MessageCircle className="w-4 h-4 mr-1" /> {comments}
+                </span>
+              )}
+              {views !== undefined && (
+                <span className="flex items-center">
+                  <Eye className="w-4 h-4 mr-1" /> {views}
+                </span>
+              )}
+            </div>
+            {ideas !== undefined && (
               <span className="flex items-center">
-                <MessageCircle className="w-4 h-4 mr-1" /> {comments}
-              </span>
-            )}
-            {views !== undefined && (
-              <span className="flex items-center">
-                <Eye className="w-4 h-4 mr-1" /> {views}
+                <span className="text-lg mr-1">💡</span> {ideas}
               </span>
             )}
           </div>
-          {ideas !== undefined && (
-            <span className="flex items-center">
-              <span className="text-lg mr-1">💡</span> {ideas}
-            </span>
-          )}
-        </div>
+        )}
         {rating && (
           <div className="flex mb-2">
             {[...Array(5)].map((_, i) => (
-              <Star 
-                key={i} 
-                className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`} 
-              />
+              <Star key={i} className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`} />
             ))}
           </div>
         )}

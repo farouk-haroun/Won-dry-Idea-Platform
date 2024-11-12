@@ -1,4 +1,3 @@
-// controllers/challengeController.js
 import Challenge from '../models/challengeModel.js';
 import { upload, uploadToS3 } from '../middleware/upload.js';
 import s3 from '../middleware/s3.js'; // Import the S3 instance if needed for delete
@@ -48,6 +47,7 @@ export const getAllChallenges = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 // Create a new challenge with S3 file upload
 export const createChallenge = [
   upload.single('thumbnail'),
@@ -61,6 +61,11 @@ export const createChallenge = [
         category,
         community
       } = req.body;
+
+      // Validate required fields
+      if (!title || !description || !category) {
+        return res.status(400).json({ message: 'Error creating challenge: Title, description and category are required' });
+      }
       
       const parsedStages = stages ? JSON.parse(stages) : [];
       const organizerId = req.user?.id;
@@ -93,7 +98,7 @@ export const createChallenge = [
       res.status(201).json(savedChallenge);
     } catch (error) {
       console.error('Error creating challenge:', error);
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: 'Error creating challenge: ' + error.message });
     }
   },
 ];

@@ -12,6 +12,10 @@ vi.mock('../controllers/challengeController', () => ({
   getAllChallenges: vi.fn(),
   createChallenge: vi.fn(),
   deleteChallenge: vi.fn(),
+  incrementViewCount: vi.fn(),
+  searchChallenges: vi.fn(),
+  getChallengeById: vi.fn(),
+  getChallengeTeams: vi.fn(),
 }));
 
 describe('Challenge Routes', () => {
