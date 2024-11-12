@@ -38,17 +38,9 @@ const Challenge = () => {
   
         const [challengeRes, teamsRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/challenges/${id}`),
-          axios.get(`${API_BASE_URL}/challenges/${id}/teams`)
         ]);
   
         setChallenge(challengeRes.data);
-        setTeams(teamsRes.data);
-  
-        // Log if there are no teams, but only if the request is successful
-        if (teamsRes.data.length === 0) {
-          console.log('No teams found for this challenge');
-        }
-  
       } catch (error) {
         // If the error is 404 specifically for teams, handle it differently
         if (error.response?.status === 404 && error.config?.url.includes('/teams')) {
