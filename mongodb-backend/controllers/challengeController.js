@@ -192,3 +192,24 @@ export const searchChallenges = async (req, res) => {
   }
 };
 
+// Archive a challenge (set status to "archive")
+export const archiveChallenge = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the challenge by ID and update the status to "archive"
+    const archivedChallenge = await Challenge.findByIdAndUpdate(
+      id,
+      { status: 'archive' },
+      { new: true }
+    );
+
+    if (!archivedChallenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+
+    res.status(200).json(archivedChallenge);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

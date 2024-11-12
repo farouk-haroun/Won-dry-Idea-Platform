@@ -6,7 +6,8 @@ deleteChallenge,
 searchChallenges,
 incrementViewCount,
 getChallengeById,
-getChallengeTeams} from '../controllers/challengeController.js';
+getChallengeTeams,
+archiveChallenge} from '../controllers/challengeController.js';
 const router = express.Router();
 
 router.post('/challenges', createChallenge);  // File upload handled here
