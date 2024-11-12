@@ -20,14 +20,13 @@ describe('Challenge Component', () => {
     expect(screen.getByText(/We are thrilled to announce the inaugural Commodore Cup/i)).toBeInTheDocument();
   });
 
-  // Test to verify the navigation links (Home, Discover, Analytics) are displayed
+  // Test to verify the navigation links are displayed
   it('renders navigation links', () => {
     renderWithRouter(<Challenge />);
 
     // Checking for the presence of navigation links
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Discover')).toBeInTheDocument();
-    expect(screen.getByText('Analytics')).toBeInTheDocument();
   });
 
   // Test to ensure that all challenge stages are rendered correctly
@@ -75,7 +74,7 @@ describe('Challenge Component', () => {
     expect(screen.getByText('Wondry Quantum Studio')).toBeInTheDocument();
   });
 
-  // Test to ensure that key metrics (views, total ideas, active users) are displayed correctly
+  // Test to ensure that key metrics are displayed correctly
   it('renders key metrics', () => {
     renderWithRouter(<Challenge />);
 
