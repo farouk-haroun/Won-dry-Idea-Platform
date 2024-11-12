@@ -1,3 +1,4 @@
+
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
@@ -21,7 +22,7 @@ const PORT = process.env.PORT || 5000;
 import ideaRoutes from './routes/ideaRoute.js';
 import userRoutes from './routes/userRoute.js';
 import teamRoutes from './routes/teamRoute.js';
-import challengeRoutes from './routes/challengeRoutes.js';
+import challengeRoutes from './routes/challengeRoute.js';
 
 // Middleware to parse JSON
 app.use(express.json());
@@ -50,19 +51,16 @@ app.use(cors(corsOptions));
 // MongoDB Connection and GridFS Setup
 const connectDB = async () => {
   const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
-  const MONGO_URI = `mongodb+srv://farharn:gEW3ivzPXjWUbvBi@ideas-platform-cluster.9oqgm.mongodb.net/test`;
-  
-   // Log URI for debugging
+  const MONGO_URI = `${process.env.MONGO_URI}${dbName}`;
 
   try {
     await mongoose.connect(MONGO_URI);
     console.log('MongoDB connected successfully');
   } catch (err) {
     console.error('MongoDB connection failed:', err);
-    process.exit(1);
+    process.exit(1); // Exit process with failure
   }
 };
-
 
 // Basic Route for API Status
 app.get('/', (req, res) => {
@@ -91,3 +89,4 @@ connectDB().then(() => {
 // Export the app for use in tests
 export { app };
 export default app;
+

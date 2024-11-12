@@ -7,7 +7,8 @@ import {
     searchChallenges,
     incrementViewCount,
     getChallengeById,
-    getChallengeTeams
+    getChallengeTeams,
+    archiveChallenge
 } from '../controllers/challengeController.js';
 import { upload } from '../middleware/upload.js';
 const router = express.Router();

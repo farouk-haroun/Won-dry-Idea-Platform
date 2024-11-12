@@ -1,6 +1,13 @@
     // Start of Selection
     // *** Place all vi.mock calls at the very top of the file ***
-    
+     // Now import the modules
+     import request from 'supertest';
+     import express from 'express';
+     import mongoose from 'mongoose';
+     import { describe, it, expect, vi, beforeEach } from 'vitest';
+     import * as challengeController from '../controllers/challengeController';
+     import Challenge from '../models/challengeModel';
+     import s3 from '../middleware/s3';
     // Mock the Challenge Model
     vi.mock('../models/challengeModel', () => {
       return {
@@ -61,14 +68,7 @@
       uploadToS3: vi.fn().mockResolvedValue('s3://bucket/path/to/file'),
     }));
     
-    // Now import the modules
-    import request from 'supertest';
-    import express from 'express';
-    import mongoose from 'mongoose';
-    import { describe, it, expect, vi, beforeEach } from 'vitest';
-    import * as challengeController from '../controllers/challengeController';
-    import Challenge from '../models/challengeModel';
-    import s3 from '../middleware/s3';
+   
     
     // Set up Express app for testing
     const app = express();
