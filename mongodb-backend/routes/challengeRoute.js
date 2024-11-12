@@ -5,13 +5,11 @@ import {getAllChallenges,
 deleteChallenge,
 searchChallenges,
 incrementViewCount,
-
-archiveChallenge} from '../controllers/challengeController.js';
+getChallengeById,
+getChallengeTeams} from '../controllers/challengeController.js';
 const router = express.Router();
 
-// Route to create a challenge with file uploads
-router.post('/challenges', createChallenge);
-
+router.post('/challenges', createChallenge);  // File upload handled here
 router.get('/challenges', getAllChallenges);
 
 // router.post('/challenges/:challengeId/stages/:stageId/submissions', addSubmission);
@@ -19,6 +17,9 @@ router.get('/challenges', getAllChallenges);
 // Delete route
 router.delete('/:id', deleteChallenge);
 router.get('/search', searchChallenges);
+
+router.get('/:id', getChallengeById);  // /api/challenges/:id
+router.get('/:id/teams', getChallengeTeams); 
 
 router.patch('/:id/view', incrementViewCount);
 router.patch('/:id/archive', archiveChallenge);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Users, Flag, Lightbulb } from 'lucide-react';
+import { Star, Flag, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const IdeaSpaceCard = ({ ideaSpace }) => {

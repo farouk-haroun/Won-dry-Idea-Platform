@@ -25,7 +25,7 @@ const IdeaSpace = () => {
     publishDateTo: '2024-09-05',
     keywords: ['SUSTAINABILITY'],
   });
-  const [challenges, setChallenges] = useState([]);
+  const [challenges] = useState([]);
 
   const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
 

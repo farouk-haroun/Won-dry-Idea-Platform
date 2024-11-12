@@ -5,7 +5,7 @@ import { upload, uploadToS3 } from '../middleware/upload.js';
 import s3 from '../middleware/s3.js'; // Import the S3 instance if needed for delete
 import path from 'path';
 import 'dotenv/config'; 
- 
+import Team from '../models/teamModel.js';
 
 // Get all challenges
 // Get all challenges with sorting options
@@ -23,10 +23,29 @@ export const getAllChallenges = async (req, res) => {
 
     const challenges = await Challenge.find()
       .sort(sortCriteria) // Apply the sorting criteria
-      .populate('organizers stages.submissions');
+      .populate('organizers stages.submissions')
+      .populate('ideaSpace');
     
-    res.status(200).json(challenges);
+    // Transform challenges to include default community data if needed
+    const transformedChallenges = challenges.map(challenge => {
+      const challengeObj = challenge.toObject();
+      if (!challengeObj.ideaSpace) {
+        challengeObj.community = {
+          name: "Wond'ry Innovation Center",
+          avatar: "https://via.placeholder.com/150"
+        };
+      } else {
+        challengeObj.community = {
+          name: challengeObj.ideaSpace.title,
+          avatar: challengeObj.ideaSpace.thumbnail
+        };
+      }
+      return challengeObj;
+    });
+    
+    res.status(200).json(transformedChallenges);
   } catch (error) {
+    console.error('Error in getAllChallenges:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -35,13 +54,21 @@ export const createChallenge = [
   upload.single('thumbnail'),
   async (req, res) => {
     try {
-      const { title, description, stages, status, category } = req.body;
+      const { 
+        title, 
+        description, 
+        stages, 
+        status, 
+        category,
+        community
+      } = req.body;
+      
       const parsedStages = stages ? JSON.parse(stages) : [];
       const organizerId = req.user?.id;
 
       let thumbnailUrl = null;
       if (req.file) {
-        thumbnailUrl = await uploadToS3(req.file); // Upload to S3 and get URL
+        thumbnailUrl = await uploadToS3(req.file);
       }
 
       const newChallenge = new Challenge({
@@ -52,6 +79,15 @@ export const createChallenge = [
         thumbnailUrl,
         status,
         category,
+        community: community ? JSON.parse(community) : {
+          name: "Wond'ry Innovation Center",
+          avatar: "https://your-default-avatar-url.com"
+        },
+        metrics: {
+          views: 0,
+          totalIdeas: 0,
+          activeUsers: 0
+        }
       });
 
       const savedChallenge = await newChallenge.save();
@@ -105,6 +141,28 @@ export const deleteChallenge = async (req, res) => {
   }
 };
 
+export const incrementViewCount = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the challenge by ID and increment the viewCounts field
+    const updatedChallenge = await Challenge.findByIdAndUpdate(
+      id,
+      { $inc: { viewCounts: 1 } },  // $inc operator to increment viewCounts by 1
+      { new: true }  // Return the updated document
+    );
+
+    if (!updatedChallenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+
+    res.status(200).json(updatedChallenge);
+  } catch (error) {
+    console.error('Error deleting challenge:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Search challenges with sorting options
 export const searchChallenges = async (req, res) => {
   try {
@@ -134,45 +192,3 @@ export const searchChallenges = async (req, res) => {
   }
 };
 
-export const incrementViewCount = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // Find the challenge by ID and increment the viewCounts field
-    const updatedChallenge = await Challenge.findByIdAndUpdate(
-      id,
-      { $inc: { viewCounts: 1 } },  // $inc operator to increment viewCounts by 1
-      { new: true }  // Return the updated document
-    );
-
-    if (!updatedChallenge) {
-      return res.status(404).json({ message: 'Challenge not found' });
-    }
-
-    res.status(200).json(updatedChallenge);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Archive a challenge (set status to "archive")
-export const archiveChallenge = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // Find the challenge by ID and update the status to "archive"
-    const archivedChallenge = await Challenge.findByIdAndUpdate(
-      id,
-      { status: 'archive' },
-      { new: true }
-    );
-
-    if (!archivedChallenge) {
-      return res.status(404).json({ message: 'Challenge not found' });
-    }
-
-    res.status(200).json(archivedChallenge);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};

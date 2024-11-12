@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
-import { X, Upload, Plus, MessageCircle, Eye } from 'lucide-react';
+import { X, Upload, Plus } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/constants';
 
 const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     title: '',
-    stages: [{
-      name: 'Opening Round',
-      until: '2024/09/29'
-    }],
+    stages: [{ name: 'Opening Round', until: '2024/09/29' }],
     organizers: [],
     description: '',
     thumbnail: null,
@@ -61,7 +58,7 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
     e.preventDefault();
     try {
       const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
+      Object.keys(formData).forEach((key) => {
         if (key === 'stages' || key === 'organizers') {
           formDataToSend.append(key, JSON.stringify(formData[key]));
         } else if (key === 'thumbnail' && formData[key]) {
@@ -70,76 +67,28 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
           formDataToSend.append(key, formData[key]);
         }
       });
-
-      const response = await axios.post(`${API_BASE_URL}/challenges/challenges`, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+  
+      const response = await axios.post(`${API_BASE_URL}/challenges`, formDataToSend, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-
+  
       if (response.status === 201) {
-        onClose();
+        onClose();  // Close popup if the challenge is created successfully
       }
     } catch (error) {
       console.error('Error creating challenge:', error);
     }
   };
-
-  const PreviewCard = () => (
-    <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
-      <div className="relative">
-        {formData.thumbnail ? (
-          <img
-            src={URL.createObjectURL(formData.thumbnail)}
-            alt="Challenge thumbnail"
-            className="w-full h-[256px] object-cover"
-          />
-        ) : (
-          <div className="w-full h-[256px] bg-gray-100 flex items-center justify-center">
-            <span className="text-gray-400">No thumbnail uploaded</span>
-          </div>
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className="font-bold text-lg mb-1">
-          {formData.title || "Challenge Title"}
-        </h3>
-        <p className="text-sm text-gray-600 mb-2">
-          {formData.category}
-        </p>
-        <span className="text-xs text-gray-600 mb-1">Stage:</span>
-        <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full mb-2">
-          {formData.stages[0]?.name || "Opening Round"}
-        </span>
-        <div className="flex items-center justify-between text-sm text-gray-600 mt-4">
-          <div className="flex items-center space-x-4">
-            <span className="flex items-center">
-              <MessageCircle className="w-4 h-4 mr-1" /> 0
-            </span>
-            <span className="flex items-center">
-              <Eye className="w-4 h-4 mr-1" /> 0
-            </span>
-          </div>
-          <span className="flex items-center">
-            <span className="text-lg mr-1">💡</span> 0
-          </span>
-        </div>
-      </div>
-    </div>
-  );
+  
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
       <div className="bg-white rounded-2xl p-8 max-w-5xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
           <X className="h-6 w-6" />
         </button>
-
         <h2 className="text-2xl font-semibold text-center text-purple-600 mb-8">Add Challenge</h2>
 
         <div className="flex gap-8">
@@ -249,7 +198,7 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
           <div className="w-80">
             <h3 className="text-gray-700 font-medium mb-4">Preview</h3>
             <div className="sticky top-8">
-              <PreviewCard />
+              {/* <PreviewCard /> */}
               <div className="mt-4">
                 <label className="block text-gray-700 mb-2">Thumbnail:</label>
                 <div className="border-2 border-dashed rounded-lg p-4">
