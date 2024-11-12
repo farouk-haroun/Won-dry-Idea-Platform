@@ -213,3 +213,36 @@ export const archiveChallenge = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getChallengeById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const challenge = await Challenge.findById(id).populate('organizers stages.submissions');
+    if (!challenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+    res.status(200).json(challenge);
+  } catch (error) {
+    console.error('Error fetching challenge by ID:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get teams associated with a specific challenge
+export const getChallengeTeams = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const challenge = await Challenge.findById(id).populate('teams'); // Make sure 'teams' is a field in your Challenge model
+    if (!challenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+
+    const teams = await Team.find({ challenge: id }); // Find teams that belong to the specified challenge
+    res.status(200).json(teams);
+  } catch (error) {
+    console.error('Error fetching teams for challenge:', error);
+    res.status(500).json({ message: error.message });
+  }
+};

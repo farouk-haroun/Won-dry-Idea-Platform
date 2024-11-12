@@ -15,7 +15,7 @@ dotenv.config();
 
 // Initialize the Express application
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 
 // Import routes
 import ideaRoutes from './routes/ideaRoute.js';
@@ -52,13 +52,10 @@ const connectDB = async () => {
   const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
   const MONGO_URI = `mongodb+srv://farharn:gEW3ivzPXjWUbvBi@ideas-platform-cluster.9oqgm.mongodb.net/test`;
   
-  console.log("Connecting to MongoDB with URI:", MONGO_URI);  // Log URI for debugging
+   // Log URI for debugging
 
   try {
-    await mongoose.connect(MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(MONGO_URI);
     console.log('MongoDB connected successfully');
   } catch (err) {
     console.error('MongoDB connection failed:', err);
