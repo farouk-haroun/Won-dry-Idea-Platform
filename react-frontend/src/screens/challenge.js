@@ -35,28 +35,42 @@ const Challenge = () => {
       try {
         setLoading(true);
         console.log('Fetching data for challenge:', id);
-        
+  
         const [challengeRes, teamsRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/challenges/${id}`),
           axios.get(`${API_BASE_URL}/challenges/${id}/teams`)
         ]);
+  
         setChallenge(challengeRes.data);
         setTeams(teamsRes.data);
+  
+        // Log if there are no teams, but only if the request is successful
+        if (teamsRes.data.length === 0) {
+          console.log('No teams found for this challenge');
+        }
+  
       } catch (error) {
-        console.error('Error fetching data:', error.response || error);
-        alert('Error loading challenge data: ' + 
-          (error.response?.data?.message || error.message) +
-          '\nStatus: ' + error.response?.status +
-          '\nEndpoint: ' + error.config?.url);
+        // If the error is 404 specifically for teams, handle it differently
+        if (error.response?.status === 404 && error.config?.url.includes('/teams')) {
+          console.log('No teams endpoint available for this challenge.');
+          setTeams([]);  // Set teams to an empty array if endpoint not found
+        } else {
+          console.error('Error fetching data:', error.response || error);
+          alert('Error loading challenge data: ' + 
+            (error.response?.data?.message || error.message) +
+            '\nStatus: ' + error.response?.status +
+            '\nEndpoint: ' + error.config?.url);
+        }
       } finally {
         setLoading(false);
       }
     };
-
+  
     if (id) {
       fetchData();
     }
   }, [id]);
+  
 
   const handleLogout = () => {
     navigate('/login');
