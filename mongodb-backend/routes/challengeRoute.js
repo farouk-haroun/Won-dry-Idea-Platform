@@ -21,12 +21,14 @@ router.get('/', getAllChallenges);
 // router.post('/challenges/:challengeId/stages/:stageId/submissions', addSubmission);
 // router.get('/search', searchChallenges);
 // Delete route
-router.delete('/challenges/:id', deleteChallenge);
+router.delete('/:id', deleteChallenge);
 router.get('/search', searchChallenges);
 
 router.get('/:id', getChallengeById);  // /api/challenges/:id
 router.get('/:id/teams', getChallengeTeams); 
 
 router.patch('/:id/view', incrementViewCount);
+router.patch('/:id/archive', archiveChallenge);
+
 
 export default router;

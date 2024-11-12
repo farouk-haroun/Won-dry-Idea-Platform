@@ -1,4 +1,5 @@
 import Challenge from '../models/challengeModel.js';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { upload, uploadToS3 } from '../middleware/upload.js';
 import s3 from '../middleware/s3.js'; // Import the S3 instance if needed for delete
 import path from 'path';
@@ -103,7 +104,6 @@ export const createChallenge = [
   },
 ];
 
-// Delete a challenge, including S3 thumbnail deletion
 export const deleteChallenge = async (req, res) => {
   const { id } = req.params;
 
@@ -114,18 +114,25 @@ export const deleteChallenge = async (req, res) => {
       return res.status(404).json({ message: 'Challenge not found' });
     }
 
+    // Check if the challenge is archived before deletion
+    if (challenge.status !== 'archive') {
+      return res.status(400).json({ message: 'Challenge must be archived before deletion' });
+    }
+
     // Delete the thumbnail from S3 if it exists
     if (challenge.thumbnailUrl) {
       // Extract the key from the S3 URL
       const urlParts = challenge.thumbnailUrl.split('/');
       const fileKey = urlParts.slice(-2).join('/'); // Assuming key is "folder/filename.ext"
 
-      const s3Params = {
+      const deleteParams = {
         Bucket: process.env.S3_BUCKET_NAME,
         Key: fileKey,
       };
 
-      await s3.deleteObject(s3Params).promise();
+      // Use DeleteObjectCommand in AWS SDK v3
+      const command = new DeleteObjectCommand(deleteParams);
+      await s3.send(command); // Send the command to delete the object
       console.log('Thumbnail deleted from S3 successfully');
     }
 
@@ -134,6 +141,7 @@ export const deleteChallenge = async (req, res) => {
 
     res.status(200).json({ message: 'Challenge deleted successfully' });
   } catch (error) {
+    console.error('Error deleting challenge:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -155,6 +163,7 @@ export const incrementViewCount = async (req, res) => {
 
     res.status(200).json(updatedChallenge);
   } catch (error) {
+    console.error('Error deleting challenge:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -188,88 +197,24 @@ export const searchChallenges = async (req, res) => {
   }
 };
 
+// Archive a challenge (set status to "archive")
 export const archiveChallenge = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const challenge = await Challenge.findByIdAndUpdate(
+    // Find the challenge by ID and update the status to "archive"
+    const archivedChallenge = await Challenge.findByIdAndUpdate(
       id,
-      { status: 'archived' },
+      { status: 'archive' },
       { new: true }
     );
 
-    if (!challenge) {
+    if (!archivedChallenge) {
       return res.status(404).json({ message: 'Challenge not found' });
     }
 
-    res.status(200).json(challenge);
+    res.status(200).json(archivedChallenge);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
-
-export const getChallengeById = async (req, res) => {
-  const { id } = req.params;
-  console.log('Fetching challenge with ID:', id);
-
-  try {
-    const challenge = await Challenge.findById(id)
-      .populate('organizers')
-      .populate('stages.submissions')
-      .populate('ideaSpace');
-
-    if (!challenge) {
-      console.log('No challenge found with ID:', id);
-      return res.status(404).json({ message: 'Challenge not found' });
-    }
-
-    // Transform the data to match what the frontend expects
-    const responseData = {
-      ...challenge.toObject(),
-      community: challenge.ideaSpace ? {
-        name: challenge.ideaSpace.title,
-        avatar: challenge.ideaSpace.thumbnail
-      } : {
-        // Default values if ideaSpace is not set
-        name: "Wond'ry Innovation Center",
-        avatar: "https://via.placeholder.com/150"
-      },
-      metrics: {
-        views: challenge.viewCounts || 0,
-        totalIdeas: challenge.stages.reduce((sum, stage) => sum + (stage.submissions?.length || 0), 0),
-        activeUsers: challenge.organizers.length
-      }
-    };
-
-    console.log('Found challenge:', responseData);
-    res.status(200).json(responseData);
-  } catch (error) {
-    console.error('Error in getChallengeById:', error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const getChallengeTeams = async (req, res) => {
-    const { id } = req.params;
-    console.log('Fetching teams for challenge ID:', id); // Debug log
-    
-    try {
-        // First verify the challenge exists
-        const challenge = await Challenge.findById(id);
-        if (!challenge) {
-            console.log('No challenge found for teams with ID:', id); // Debug log
-            return res.status(404).json({ message: 'Challenge not found' });
-        }
-
-        // Find all teams associated with this challenge
-        const teams = await Team.find({ challengeId: id })
-            .populate('members', 'name email')
-            .populate('createdBy', 'name email');
-
-        console.log('Found teams:', teams); // Debug log
-        res.status(200).json(teams);
-    } catch (error) {
-        console.error('Error in getChallengeTeams:', error);
-        res.status(500).json({ message: error.message });
-    }
 };
