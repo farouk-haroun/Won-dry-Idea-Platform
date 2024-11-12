@@ -48,13 +48,17 @@ const AdminFeedbackForm = ({ feedback, setFeedback, submitFeedback }) => {
       <div className="grid grid-cols-2 gap-4 mb-4">
         {['scalability', 'sustainability', 'innovation', 'impact'].map((category) => (
           <div key={category} className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-gray-600 mb-2">{category.charAt(0).toUpperCase() + category.slice(1)}</h3>
+            <h3 className="text-gray-600 mb-2">
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </h3>
             <div className="flex">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
                   className={`w-5 h-5 cursor-pointer ${
-                    star <= feedback[category] ? 'text-purple-600 fill-purple-600' : 'text-purple-300'
+                    star <= feedback[category]
+                      ? 'text-purple-600 fill-purple-600'
+                      : 'text-purple-300'
                   }`}
                   onClick={() => handleStarClick(category, star)}
                 />
@@ -70,11 +74,16 @@ const AdminFeedbackForm = ({ feedback, setFeedback, submitFeedback }) => {
           rows="4"
           placeholder="Add Feedback"
           value={feedback.comments}
-          onChange={(e) => setFeedback((prev) => ({ ...prev, comments: e.target.value }))}
+          onChange={(e) =>
+            setFeedback((prev) => ({ ...prev, comments: e.target.value }))
+          }
         />
       </div>
       <div className="flex gap-4">
-        <button onClick={submitFeedback} className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors">
+        <button
+          onClick={submitFeedback}
+          className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
+        >
           Submit Feedback
         </button>
       </div>
@@ -102,7 +111,9 @@ const ChallengeIdea = ({ isAdmin }) => {
   const initialIdea = location.state?.idea;
   const [isLoading, setIsLoading] = useState(true);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
-  const [idea, setIdea] = useState(initialIdea || {});
+  const [idea, setIdea] = useState(
+    initialIdea || { team: [], challenge: {}, feedback: {} }
+  );
   const navigate = useNavigate();
   const [feedback, setFeedback] = useState({
     scalability: 0,
@@ -134,6 +145,7 @@ const ChallengeIdea = ({ isAdmin }) => {
     } else {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idea?.id]);
 
   const submitFeedback = async () => {
@@ -153,10 +165,12 @@ const ChallengeIdea = ({ isAdmin }) => {
     );
   }
 
-  if (!idea) {
+  if (!idea || Object.keys(idea).length === 0) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p className="text-lg text-gray-600">You are not authorized to view this idea.</p>
+        <p className="text-lg text-gray-600">
+          You are not authorized to view this idea.
+        </p>
       </div>
     );
   }
@@ -168,8 +182,12 @@ const ChallengeIdea = ({ isAdmin }) => {
           <img src="/main_logo.svg" alt="Wondry Logo" className="h-8" />
         </Link>
         <nav className="hidden md:flex space-x-6">
-          <Link to="/" className="text-gray-700">Home</Link>
-          <Link to="/discover" className="text-gray-700">Discover</Link>
+          <Link to="/" className="text-gray-700">
+            Home
+          </Link>
+          <Link to="/discover" className="text-gray-700">
+            Discover
+          </Link>
         </nav>
         <div className="flex items-center space-x-4">
           <Search className="text-gray-500 cursor-pointer" />
@@ -183,7 +201,10 @@ const ChallengeIdea = ({ isAdmin }) => {
               MM
             </div>
             {showProfilePopup && (
-              <ProfilePopup onClose={() => setShowProfilePopup(false)} onLogout={() => navigate('/login')} />
+              <ProfilePopup
+                onClose={() => setShowProfilePopup(false)}
+                onLogout={() => navigate('/login')}
+              />
             )}
           </div>
         </div>
@@ -195,7 +216,10 @@ const ChallengeIdea = ({ isAdmin }) => {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-2xl font-bold flex-grow">{idea.title}</h1>
-          <button className="bg-purple-600 text-white px-4 py-2 rounded-md" onClick={() => navigate('/idea')}>
+          <button
+            className="bg-purple-600 text-white px-4 py-2 rounded-md"
+            onClick={() => navigate('/idea')}
+          >
             Open Idea Board
           </button>
           <button className="border border-gray-300 rounded-full p-2 ml-2">
@@ -222,19 +246,34 @@ const ChallengeIdea = ({ isAdmin }) => {
             <div className="bg-white rounded-lg p-4 border">
               <h3 className="font-bold mb-4">Team</h3>
               <div className="grid grid-cols-2 gap-2">
-                {idea.team.map((member, index) => (
-                  <div key={index} className="flex items-center bg-gray-100 rounded-full py-2 px-4">
-                    <img src={member.avatar} alt={member.name} className="w-8 h-8 rounded-full mr-2" />
-                    <span className="text-sm">{member.name}</span>
-                  </div>
-                ))}
+                {Array.isArray(idea.team) && idea.team.length > 0 ? (
+                  idea.team.map((member, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center bg-gray-100 rounded-full py-2 px-4"
+                    >
+                      <img
+                        src={member.avatar || '/default_avatar.png'}
+                        alt={member.name}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                      <span className="text-sm">{member.name}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No team members available.</p>
+                )}
               </div>
             </div>
 
             <div className="bg-white rounded-lg p-4 border">
               <h3 className="font-bold mb-4">Challenge</h3>
-              <p className="text-gray-700">{idea.challenge.title}</p>
-              <p className="text-gray-500">{idea.challenge.category}</p>
+              <p className="text-gray-700">
+                {idea.challenge?.title || 'No challenge title available.'}
+              </p>
+              <p className="text-gray-500">
+                {idea.challenge?.category || 'No challenge category available.'}
+              </p>
             </div>
 
             <div className="bg-white rounded-lg p-4 border">
@@ -242,8 +281,10 @@ const ChallengeIdea = ({ isAdmin }) => {
               <div className="grid grid-cols-2 gap-4">
                 {['scalability', 'sustainability', 'innovation', 'impact'].map((category) => (
                   <div key={category} className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="text-gray-600 mb-2">{category.charAt(0).toUpperCase() + category.slice(1)}</h3>
-                    <StarRating rating={idea.feedback[category]} />
+                    <h3 className="text-gray-600 mb-2">
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </h3>
+                    <StarRating rating={idea.feedback?.[category] || 0} />
                   </div>
                 ))}
               </div>
@@ -251,7 +292,13 @@ const ChallengeIdea = ({ isAdmin }) => {
           </div>
         </div>
 
-        {isAdmin && <AdminFeedbackForm feedback={feedback} setFeedback={setFeedback} submitFeedback={submitFeedback} />}
+        {isAdmin && (
+          <AdminFeedbackForm
+            feedback={feedback}
+            setFeedback={setFeedback}
+            submitFeedback={submitFeedback}
+          />
+        )}
         <IdeaNavigation />
       </div>
     </div>

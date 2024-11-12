@@ -24,7 +24,7 @@ const Challenge = () => {
     tracks: [],
     stages: [],
     organizers: [],
-    community: { name: '', avatar: '' },
+    community: { name: "Wond'ry Innovation Center", avatar: '' },
     metrics: null
   });
   const [loading, setLoading] = useState(true);
@@ -40,7 +40,11 @@ const Challenge = () => {
           axios.get(`${API_BASE_URL}/challenges/${id}`),
         ]);
   
-        setChallenge(challengeRes.data);
+        const challengeData = challengeRes.data;
+        if (!challengeData.community) {
+          challengeData.community = { name: "Wond'ry Innovation Center", avatar: '' };
+        }
+        setChallenge(challengeData);
       } catch (error) {
         // If the error is 404 specifically for teams, handle it differently
         if (error.response?.status === 404 && error.config?.url.includes('/teams')) {
@@ -226,19 +230,6 @@ const Challenge = () => {
               )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Challenge Organizers</h3>
-              <div className="grid grid-cols-2 gap-2 mb-8">
-                {(challenge.organizers || []).map((organizer, index) => (
-                  <div key={index} className="flex items-center bg-gray-100 rounded-full py-2 px-4">
-                    <img 
-                      src={organizer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(organizer.name || '')}`} 
-                      alt={organizer.name || 'Organizer'} 
-                      className="w-8 h-8 rounded-full mr-2" 
-                    />
-                    <span className="text-sm">{organizer.name}</span>
-                  </div>
-                ))}
-              </div>
               {challenge.community && (
                 <>
                   <h3 className="text-lg font-semibold mb-4">Community</h3>
