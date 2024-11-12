@@ -1,87 +1,207 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import store from '../store';
-import Login from './login';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import axios from 'axios';
+import Login from './login';
+import authReducer from '../store/authSlice';
+import { API_BASE_URL } from '../utils/constants';
 
-describe('Login Component', () => {
-  // Helper function to render the component with Redux provider and Router
-  function renderWithProvider(ui) {
-    return render(
+// Mock axios
+jest.mock('axios');
+
+// Mock react-router-dom hooks
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}));
+
+// Setup store
+const setupStore = (preloadedState = {}) => {
+  return configureStore({
+    reducer: {
+      auth: authReducer,
+    },
+    preloadedState,
+  });
+};
+
+// Test wrapper component
+const renderWithProviders = (
+  ui,
+  {
+    preloadedState = {},
+    store = setupStore(preloadedState),
+    ...renderOptions
+  } = {}
+) => {
+  const Wrapper = ({ children }) => {
+    return (
       <Provider store={store}>
-        <MemoryRouter>{ui}</MemoryRouter>
+        <MemoryRouter>
+          {children}
+        </MemoryRouter>
       </Provider>
     );
-  }
+  };
+  return { store, ...render(ui, { wrapper: Wrapper, ...renderOptions }) };
+};
 
-  // Test if the component renders without crashing
-  it('renders login form correctly', () => {
-    renderWithProvider(<Login />);
-    
-    expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
-
-    // Check if the login buttons are rendered
-    const buttons = screen.getAllByRole('button');
-    
-    // Check the content of the buttons to distinguish between them
-    const nonVUButton = buttons.find(button => button.textContent === 'Non-VU Log In');
-    const vuButton = buttons.find(button => button.textContent.includes('VU Log In'));
-
-    // Assert that both buttons are rendered
-    expect(nonVUButton).toBeInTheDocument();
-    expect(vuButton).toBeInTheDocument();
+describe('Login Component', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  // Test if typing in email input works
-  it('allows typing in the email input', () => {
-    renderWithProvider(<Login />);
-    const emailInput = screen.getByPlaceholderText(/Email/i);
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    expect(emailInput.value).toBe('test@example.com');
-  });
+  describe('Rendering', () => {
+    test('renders login form with all necessary elements', () => {
+      renderWithProviders(<Login />);
 
-  // Test if typing in password input works
-  it('allows typing in the password input', () => {
-    renderWithProvider(<Login />);
-    const passwordInput = screen.getByPlaceholderText(/Password/i);
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    expect(passwordInput.value).toBe('password123');
-  });
-
-  // Test if form submission works and logs the email and password
-  it('submits the form and logs the email and password', () => {
-    // Spy on console.log
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-
-    renderWithProvider(<Login />);
-    const emailInput = screen.getByPlaceholderText(/Email/i);
-    const passwordInput = screen.getByPlaceholderText(/Password/i);
-    const loginButton = screen.getByRole('button', { name: /Non-VU Log In/i });
-
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(loginButton);
-
-    expect(console.log).toHaveBeenCalledWith('Login attempt with:', {
-      email: 'test@example.com',
-      password: 'password123',
+      // Check for form elements
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^non-vu log in$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^v.*vu log in$/i })).toBeInTheDocument();
+      
+      // Check for links
+      expect(screen.getByText(/forgot password/i)).toBeInTheDocument();
+      expect(screen.getByText(/sign up/i)).toBeInTheDocument();
     });
 
-    // Restore console.log after the test
-    console.log.mockRestore();
+    test('renders logo on larger screens', () => {
+      renderWithProviders(<Login />);
+      const logo = screen.getByAltText(/logo/i);
+      expect(logo).toBeInTheDocument();
+      expect(logo).toHaveAttribute('src', '/logo.svg');
+    });
   });
 
-  // Test if the 'Forgot password?' link is rendered
-  it('renders forgot password link', () => {
-    renderWithProvider(<Login />);
-    expect(screen.getByText(/Forgot password\?/i)).toBeInTheDocument();
+  describe('Form Interaction', () => {
+    test('updates email input value on change', async () => {
+      renderWithProviders(<Login />);
+      const emailInput = screen.getByLabelText(/email/i);
+      
+      await waitFor(() => {
+        fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+        expect(emailInput.value).toBe('test@example.com');
+      });
+    });
+
+    test('updates password input value on change', async () => {
+      renderWithProviders(<Login />);
+      const passwordInput = screen.getByLabelText(/password/i);
+      
+      await waitFor(() => {
+        fireEvent.change(passwordInput, { target: { value: 'password123' } });
+        expect(passwordInput.value).toBe('password123');
+      });
+    });
+
+    test('displays validation messages for required fields when submitting empty form', async () => {
+      renderWithProviders(<Login />);
+      const submitButton = screen.getByRole('button', { name: /^non-vu log in$/i });
+      
+      await waitFor(() => {
+        fireEvent.click(submitButton);
+        const emailInput = screen.getByLabelText(/email/i);
+        const passwordInput = screen.getByLabelText(/password/i);
+        
+        expect(emailInput).toBeInvalid();
+        expect(passwordInput).toBeInvalid();
+      });
+    });
   });
 
-  // Test if the 'Sign Up' link is rendered
-  it('renders sign up link', () => {
-    renderWithProvider(<Login />);
-    expect(screen.getByText(/Sign Up/i)).toBeInTheDocument();
+  describe('API Integration', () => {
+    test('successful login redirects to discover page', async () => {
+      const mockResponse = {
+        status: 200,
+        data: {
+          user: {
+            id: '123',
+            name: 'Test User',
+            email: 'test@example.com'
+          },
+          token: 'mock-token'
+        }
+      };
+      
+      axios.post.mockResolvedValueOnce(mockResponse);
+      
+      renderWithProviders(<Login />);
+      
+      const emailInput = screen.getByLabelText(/email/i);
+      const passwordInput = screen.getByLabelText(/password/i);
+      const submitButton = screen.getByRole('button', { name: /^non-vu log in$/i });
+
+      await waitFor(() => {
+        fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+        fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      });
+
+      await waitFor(() => {
+        fireEvent.click(submitButton);
+      });
+      
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledWith(
+          `${API_BASE_URL}/users/login`,
+          {
+            email: 'test@example.com',
+            password: 'password123'
+          }
+        );
+        expect(mockNavigate).toHaveBeenCalledWith('/discover');
+      });
+    });
+
+    test('displays error message on failed login', async () => {
+      axios.post.mockRejectedValueOnce(new Error('Invalid credentials'));
+      
+      renderWithProviders(<Login />);
+      
+      const emailInput = screen.getByLabelText(/email/i);
+      const passwordInput = screen.getByLabelText(/password/i);
+      const submitButton = screen.getByRole('button', { name: /^non-vu log in$/i });
+
+      await waitFor(() => {
+        fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+        fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
+      });
+
+      await waitFor(() => {
+        fireEvent.click(submitButton);
+      });
+      
+      await waitFor(() => {
+        expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
+      });
+    });
+
+    test('clears error message when component mounts', async () => {
+      const preloadedState = {
+        auth: {
+          error: 'Previous error message'
+        }
+      };
+      
+      renderWithProviders(<Login />, { preloadedState });
+      
+      await waitFor(() => {
+        expect(screen.queryByText(/previous error message/i)).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Navigation', () => {
+    test('signup link navigates to signup page', async () => {
+      renderWithProviders(<Login />);
+      const signupLink = screen.getByText(/sign up/i);
+      
+      await waitFor(() => {
+        expect(signupLink).toHaveAttribute('href', '/signup');
+      });
+    });
   });
 });
