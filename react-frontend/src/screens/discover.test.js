@@ -1,107 +1,166 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act } from 'react-dom/test-utils';
 import Discover from './discover';
 import { MemoryRouter } from 'react-router-dom';
-
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/constants';
 
+// Mock axios
 jest.mock('axios');
 
-describe('Discover Component', () => {
-  // Helper function to render the component with necessary providers
-  const renderWithProviders = (component) => {
-    return render(
-      <MemoryRouter>{component}</MemoryRouter>
+// Mock the ChallengeCard component
+jest.mock('../components/ChallengeCard', () => {
+  return function MockChallengeCard({ challenge }) {
+    return (
+      <div data-testid="challenge-card">
+        <h3>{challenge.title}</h3>
+      </div>
     );
   };
+});
 
+describe('Discover Component', () => {
+  const mockChallenges = [
+    { 
+      _id: '1', 
+      title: 'Idea Innovation Challenge',
+      status: 'ACTIVE',
+      stages: [
+        { submissions: [] },
+        { submissions: [] }
+      ]
+    },
+    { 
+      _id: '2', 
+      title: 'Interactive Dashboards',
+      status: 'ACTIVE',
+      stages: [
+        { submissions: [] }
+      ]
+    },
+    { 
+      _id: '3', 
+      title: "Wond'ry Quantum Studio",
+      status: 'ACTIVE',
+      stages: [
+        { submissions: [] }
+      ]
+    }
+  ];
 
   beforeEach(() => {
-    axios.get.mockClear();
+    axios.get.mockReset();
+    axios.get.mockResolvedValue({ data: mockChallenges });
   });
 
-  // Test to check if navigation links are rendered
-  it('renders the navigation links', () => {
-    renderWithProviders(<Discover />);
+  const renderWithProviders = async () => {
+    let result;
+    await act(async () => {
+      result = render(
+        <MemoryRouter>
+          <Discover />
+        </MemoryRouter>
+      );
+    });
+    return result;
+  };
+
+  it('renders navigation links', async () => {
+    await renderWithProviders();
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Discover')).toBeInTheDocument();
-    expect(screen.getByText('Analytics')).toBeInTheDocument();
-
-    // Since 'Profile' is now represented by 'MM' (user initials), we check for 'MM'
     expect(screen.getByText('MM')).toBeInTheDocument();
   });
 
-  // Test to check if filter buttons are rendered
-  it('renders the filter buttons', () => {
-    renderWithProviders(<Discover />);
+  it('renders filter buttons', async () => {
+    await renderWithProviders();
     expect(screen.getByText('Challenges')).toBeInTheDocument();
     expect(screen.getByText('Ideas')).toBeInTheDocument();
     expect(screen.getByText('Idea Spaces')).toBeInTheDocument();
   });
 
-  // Test to check if clicking 'Challenges' button toggles its active state
-  it('toggles the Challenges button selection', () => {
-    renderWithProviders(<Discover />);
-    const challengesButton = screen.getByText('Challenges');
-
-    // Assuming the active button has 'bg-gray-800 text-white' classes
-    expect(challengesButton).toHaveClass('bg-gray-800', 'text-white');
-
-    // Click the button to toggle its state
-    fireEvent.click(challengesButton);
-
-    // After clicking, check if the classes have changed
-    expect(challengesButton).toHaveClass('bg-gray-800', 'text-white');
+  it('renders search and sort elements', async () => {
+    await renderWithProviders();
+    expect(screen.getByPlaceholderText('Looking for Something?')).toBeInTheDocument();
+    expect(screen.getByText('Sort By:')).toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toHaveValue('Relevance');
   });
 
-  // Test to check if clicking 'Ideas' button toggles its active state
-  it('toggles the Ideas button selection', () => {
-    renderWithProviders(<Discover />);
+  it('renders the create challenge button', async () => {
+    await renderWithProviders();
+    expect(screen.getByText('Create Challenge')).toBeInTheDocument();
+  });
+
+  it('renders challenges from API', async () => {
+    await renderWithProviders();
+    
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(`${API_BASE_URL}/challenges/challenges`);
+      expect(screen.getAllByTestId('challenge-card')).toHaveLength(3);
+      expect(screen.getByText('Idea Innovation Challenge')).toBeInTheDocument();
+      expect(screen.getByText('Interactive Dashboards')).toBeInTheDocument();
+      expect(screen.getByText("Wond'ry Quantum Studio")).toBeInTheDocument();
+    });
+  });
+
+  it('toggles filter options correctly', async () => {
+    await renderWithProviders();
+    
+    const challengesButton = screen.getByText('Challenges');
     const ideasButton = screen.getByText('Ideas');
-
-    // Initially, the 'Ideas' button should not have 'bg-gray-800 text-white' classes
+    
+    expect(challengesButton).toHaveClass('bg-gray-800', 'text-white');
     expect(ideasButton).not.toHaveClass('bg-gray-800', 'text-white');
-
-    // Click the button to toggle its state
-    fireEvent.click(ideasButton);
-
-    // After clicking, check if the classes have changed
+    
+    await act(async () => {
+      fireEvent.click(ideasButton);
+    });
+    
     expect(ideasButton).toHaveClass('bg-gray-800', 'text-white');
   });
 
-  // Test to check if the search input is rendered with correct placeholder
-  it('renders the search input', () => {
-    renderWithProviders(<Discover />);
-    expect(screen.getByPlaceholderText('Looking for Something?')).toBeInTheDocument();
+  it('opens and closes filter dialog', async () => {
+    await renderWithProviders();
+    
+    const filterButton = screen.getByText('Filter');
+    await act(async () => {
+      fireEvent.click(filterButton);
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText('Keywords:')).toBeInTheDocument();
+    });
+    
+    const closeButton = screen.getByRole('button', { name: /search/i });
+    await act(async () => {
+      fireEvent.click(closeButton);
+    });
+    
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 
-  // Test to check if the 'Sort By' dropdown is rendered
-  it('renders the Sort By dropdown', () => {
-    renderWithProviders(<Discover />);
-    expect(screen.getByText('Sort By:')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Relevance')).toBeInTheDocument();
+  it('handles API error gracefully', async () => {
+    axios.get.mockRejectedValueOnce(new Error('API Error'));
+    
+    await renderWithProviders();
+    
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(`${API_BASE_URL}/challenges/challenges`);
+      expect(screen.queryAllByTestId('challenge-card')).toHaveLength(0);
+    });
   });
 
-  // Mock data for challenges
-  const mockChallenges = [
-    { id: 1, title: 'Idea Innovation Challenge' },
-    { id: 2, title: 'Interactive Dashboards' },
-    { id: 3, title: "Wond'ry Quantum Studio" },
-  ];
-
-  // Test to check if IdeaCards are rendered when data is provided
-  it('renders the IdeaCards', () => {
-    // Modify the Discover component to accept 'challenges' as a prop for testing purposes
-    renderWithProviders(<Discover challenges={mockChallenges} />);
-
-    expect(screen.getByText('Idea Innovation Challenge')).toBeInTheDocument();
-    expect(screen.getByText('Interactive Dashboards')).toBeInTheDocument();
-    expect(screen.getByText("Wond'ry Quantum Studio")).toBeInTheDocument();
+  it('renders footer', async () => {
+    await renderWithProviders();
+    expect(screen.getByText(/Wondry © 2024/)).toBeInTheDocument();
   });
 
-  // Test to check if the footer is rendered
-  it('renders the footer', () => {
-    renderWithProviders(<Discover />);
-    expect(screen.getByText('Wondry © 2024')).toBeInTheDocument();
+  // Clean up after all tests
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 });
