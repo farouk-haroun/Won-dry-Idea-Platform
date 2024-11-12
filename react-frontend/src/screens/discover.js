@@ -12,6 +12,7 @@ const Discover = () => {
   const [selectedOptions, setSelectedOptions] = useState(['Challenges']);
   const [challenges, setChallenges] = useState([]);
   
+  
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -28,6 +29,7 @@ const Discover = () => {
   });
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showCreateChallenge, setShowCreateChallenge] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,6 +70,22 @@ const searchChallenges = async (sortBy) => {
     console.error('Error searching challenges:', error);
   }
 };
+const handleChallengeDeleted = (deletedId) => {
+  setChallenges((prevChallenges) => prevChallenges.filter((challenge) => challenge._id !== deletedId));
+  setFeedbackMessage("Challenge has been deleted successfully!");
+  setTimeout(() => setFeedbackMessage(null), 3000); // Clear message after 3 seconds
+};
+
+const handleChallengeArchived = (archivedId) => {
+  setChallenges((prevChallenges) =>
+    prevChallenges.map((challenge) =>
+      challenge._id === archivedId ? { ...challenge, status: 'archived' } : challenge
+    )
+  );
+  setFeedbackMessage("Challenge has been archived successfully!");
+  setTimeout(() => setFeedbackMessage(null), 3000); // Clear message after 3 seconds
+};
+
 
 // Handle sort change
 const handleSortChange = (e) => {
@@ -167,7 +185,7 @@ const handleSortChange = (e) => {
           </div>
         </div>
       </header>
-
+      {feedbackMessage && <div className="bg-yellow-100 text-yellow-800 p-2 mb-4 rounded">{feedbackMessage}</div>}
       <div className="mb-4 mt-8 flex justify-between items-center">
         <div className="flex flex-wrap gap-2">
           <span className="text-gray-600 text-sm mr-2 flex items-center">Show Me:</span>
@@ -223,12 +241,13 @@ const handleSortChange = (e) => {
           </button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {challenges.map((challenge) => (
           <ChallengeCard
             key={challenge._id}
             challenge={challenge}
+            onChallengeDeleted={handleChallengeDeleted}
+            onChallengeArchived={handleChallengeArchived}
           />
         ))}
       </div>

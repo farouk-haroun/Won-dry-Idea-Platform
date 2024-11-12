@@ -13,7 +13,7 @@ const challengeSchema = new mongoose.Schema({
   ],
   organizers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdAt: { type: Date, default: Date.now },
-  status: { type: String, enum: ['open', 'closed', 'DRAFT'], default: 'open' },
+  status: { type: String, enum: ['open', 'closed', 'DRAFT', 'archive'], default: 'open' },
   thumbnailUrl: { type: String },  // Use a string to store the file path or URL
   category: {
     type: String,

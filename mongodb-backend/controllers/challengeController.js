@@ -1,5 +1,6 @@
 // controllers/challengeController.js
 import Challenge from '../models/challengeModel.js';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { upload, uploadToS3 } from '../middleware/upload.js';
 import s3 from '../middleware/s3.js'; // Import the S3 instance if needed for delete
 import path from 'path';
@@ -62,7 +63,6 @@ export const createChallenge = [
   },
 ];
 
-// Delete a challenge, including S3 thumbnail deletion
 export const deleteChallenge = async (req, res) => {
   const { id } = req.params;
 
@@ -73,18 +73,25 @@ export const deleteChallenge = async (req, res) => {
       return res.status(404).json({ message: 'Challenge not found' });
     }
 
+    // Check if the challenge is archived before deletion
+    if (challenge.status !== 'archive') {
+      return res.status(400).json({ message: 'Challenge must be archived before deletion' });
+    }
+
     // Delete the thumbnail from S3 if it exists
     if (challenge.thumbnailUrl) {
       // Extract the key from the S3 URL
       const urlParts = challenge.thumbnailUrl.split('/');
       const fileKey = urlParts.slice(-2).join('/'); // Assuming key is "folder/filename.ext"
 
-      const s3Params = {
+      const deleteParams = {
         Bucket: process.env.S3_BUCKET_NAME,
         Key: fileKey,
       };
 
-      await s3.deleteObject(s3Params).promise();
+      // Use DeleteObjectCommand in AWS SDK v3
+      const command = new DeleteObjectCommand(deleteParams);
+      await s3.send(command); // Send the command to delete the object
       console.log('Thumbnail deleted from S3 successfully');
     }
 
@@ -93,6 +100,7 @@ export const deleteChallenge = async (req, res) => {
 
     res.status(200).json({ message: 'Challenge deleted successfully' });
   } catch (error) {
+    console.error('Error deleting challenge:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -142,6 +150,28 @@ export const incrementViewCount = async (req, res) => {
     }
 
     res.status(200).json(updatedChallenge);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Archive a challenge (set status to "archive")
+export const archiveChallenge = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the challenge by ID and update the status to "archive"
+    const archivedChallenge = await Challenge.findByIdAndUpdate(
+      id,
+      { status: 'archive' },
+      { new: true }
+    );
+
+    if (!archivedChallenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+
+    res.status(200).json(archivedChallenge);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
