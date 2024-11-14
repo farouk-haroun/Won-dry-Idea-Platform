@@ -24,7 +24,7 @@ const Challenge = () => {
     tracks: [],
     stages: [],
     organizers: [],
-    community: { name: '', avatar: '' },
+    community: { name: "Wond'ry Innovation Center", avatar: '' },
     metrics: null
   });
   const [loading, setLoading] = useState(true);
@@ -38,17 +38,13 @@ const Challenge = () => {
   
         const [challengeRes, teamsRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/challenges/${id}`),
-          axios.get(`${API_BASE_URL}/challenges/${id}/teams`)
         ]);
   
-        setChallenge(challengeRes.data);
-        setTeams(teamsRes.data);
-  
-        // Log if there are no teams, but only if the request is successful
-        if (teamsRes.data.length === 0) {
-          console.log('No teams found for this challenge');
+        const challengeData = challengeRes.data;
+        if (!challengeData.community) {
+          challengeData.community = { name: "Wond'ry Innovation Center", avatar: '' };
         }
-  
+        setChallenge(challengeData);
       } catch (error) {
         // If the error is 404 specifically for teams, handle it differently
         if (error.response?.status === 404 && error.config?.url.includes('/teams')) {
@@ -234,19 +230,6 @@ const Challenge = () => {
               )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Challenge Organizers</h3>
-              <div className="grid grid-cols-2 gap-2 mb-8">
-                {(challenge.organizers || []).map((organizer, index) => (
-                  <div key={index} className="flex items-center bg-gray-100 rounded-full py-2 px-4">
-                    <img 
-                      src={organizer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(organizer.name || '')}`} 
-                      alt={organizer.name || 'Organizer'} 
-                      className="w-8 h-8 rounded-full mr-2" 
-                    />
-                    <span className="text-sm">{organizer.name}</span>
-                  </div>
-                ))}
-              </div>
               {challenge.community && (
                 <>
                   <h3 className="text-lg font-semibold mb-4">Community</h3>
@@ -360,7 +343,7 @@ const Challenge = () => {
                       className="w-full flex items-center justify-center space-x-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-gray-500 hover:text-gray-700 hover:border-gray-400"
                     >
                       <Plus className="w-5 h-5" />
-                      <span>Create New Team</span>
+                      <span>Create New Idea</span>
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -397,7 +380,7 @@ const Challenge = () => {
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                   <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                    Create New Team
+                    Create New Idea
                   </Dialog.Title>
                   <button
                     onClick={() => setIsCreateTeamDialogOpen(false)}
@@ -432,7 +415,7 @@ const Challenge = () => {
                         type="submit"
                         className="w-full inline-flex justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
                       >
-                        Create Team
+                        Create Idea
                       </button>
                     </div>
                   </form>

@@ -226,13 +226,61 @@ export const updateUserProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
+    // Update fields
+    const updateFields = ['name', 'email', 'department', 'interests', 'skills'];
+    updateFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
 
     await user.save();
-    res.status(200).json({ message: 'Profile updated successfully', user });
+    
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        name: user.name || '',
+        email: user.email || '',
+        role: user.role || 'user',
+        department: user.department || '',
+        points: user.points || 0,
+        interests: user.interests || [],
+        skills: user.skills || [],
+        createdAt: user.createdAt
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ message: 'Error updating profile' });
+  }
+};
+
+// Add or update the getUserProfile function
+export const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return formatted user data
+    res.status(200).json({
+      id: user._id,
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'user',
+      department: user.department || '',
+      points: user.points || 0,
+      interests: user.interests || [],
+      skills: user.skills || [],
+      createdAt: user.createdAt
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Error fetching user profile' });
   }
 };
 
@@ -253,6 +301,8 @@ export const getUserById = async (req, res) => {
       email: user.email,
       createdAt: user.createdAt
     };
+
+    console.log(userData);
 
     res.status(200).json(userData);
   } catch (error) {

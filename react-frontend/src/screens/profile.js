@@ -12,38 +12,115 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('Challenges');
   const [challenges, setChallenges] = useState([]);
   const [userProfile, setUserProfile] = useState({
-    name: 'Mothuso Malunga',
-    email: 'mothuso.malunga@vanderbilt.edu',
+    name: '',
+    email: '',
     points: 0,
-    role: 'Student',
-    department: 'Computer Science',
-    joinedDate: 'January 2024',
+    role: 'user',
+    department: '',
+    createdAt: '',
+    interests: [],
+    skills: []
   });
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUserChallenges();
+    fetchUserProfile();
+    // fetchUserChallenges();
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/users/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const userData = response.data;
+      const formattedDate = new Date(userData.createdAt).toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+      });
+
+      console.log(userData);
+
+      setUserProfile({
+        ...userData,
+        name: userData.name || 'Anonymous User',
+        department: userData.department || 'Not specified',
+        points: userData.points || 0,
+        interests: userData.interests || [],
+        skills: userData.skills || [],
+        createdAt: formattedDate
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
+    }
+  };
 
   const fetchUserChallenges = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/challenges/user-challenges`);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${API_BASE_URL}/challenges/user-challenges`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       setChallenges(response.data);
     } catch (error) {
       console.error('Error fetching user challenges:', error);
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
     }
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
     navigate('/login');
   };
 
-  const handleProfileUpdate = (updatedProfile) => {
-    setUserProfile((prev) => ({
-      ...prev,
-      ...updatedProfile,
-    }));
+  const handleProfileUpdate = async (updatedProfile) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `${API_BASE_URL}/users/profile`,
+        updatedProfile,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data && response.data.user) {
+        const userData = response.data.user;
+        const formattedDate = new Date(userData.createdAt).toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric'
+        });
+
+        setUserProfile(prev => ({
+          ...prev,
+          ...userData,
+          department: userData.department || 'Not specified',
+          createdAt: formattedDate
+        }));
+      }
+      setShowProfileSettings(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
   };
 
   return (
@@ -112,19 +189,15 @@ const Profile = () => {
               <div className="mt-4 flex space-x-6">
                 <div>
                   <span className="text-gray-600">Role:</span>
-                  <span className="ml-2 font-medium">{userProfile.role}</span>
+                  <span className="ml-2 font-medium">{userProfile.role || 'User'}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Department:</span>
-                  <span className="ml-2 font-medium">{userProfile.department}</span>
+                  <span className="ml-2 font-medium">{userProfile.department || 'Not specified'}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Joined:</span>
-                  <span className="ml-2 font-medium">{userProfile.joinedDate}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Points Earned:</span>
-                  <span className="ml-2 font-medium">{userProfile.points}</span>
+                  <span className="ml-2 font-medium">{userProfile.createdAt || 'Not available'}</span>
                 </div>
               </div>
             </div>
