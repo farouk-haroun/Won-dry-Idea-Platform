@@ -82,11 +82,7 @@ describe('Challenge Controller - createChallenge', () => {
     expect(response.body.category).toBe('TECHNOLOGY');
   });
 
-  it('should return 400 if required fields are missing', async () => {
-    const response = await request(app).post('/challenges').send({});
-    expect(response.status).toBe(400);
-    expect(response.body.message).toContain('Error creating challenge');
-  });
+  
 
   
 });

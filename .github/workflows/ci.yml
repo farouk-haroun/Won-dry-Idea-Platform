@@ -65,5 +65,5 @@ jobs:
 
       - name: Run frontend tests
         env:
-          REACT_APP_API_URL: "http://localhost:5000/api" # Example environment variable if needed
+          REACT_APP_API_URL: "https://won-dry-idea-platform.onrender.com/api" # Example environment variable if needed
         run: npm test
