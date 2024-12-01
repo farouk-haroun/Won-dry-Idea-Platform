@@ -8,7 +8,7 @@ const IdeaSpaceCard = ({ ideaSpace }) => {
   const handleClick = () => {
     // Convert title to URL-friendly format and navigate
     const urlTitle = ideaSpace.title.toLowerCase().replace(/\s+/g, '-');
-    navigate(`/idea-space/${urlTitle}`);
+    navigate(`/idea-space/${ideaSpace._id}-${urlTitle}`);
   };
 
   return (
@@ -19,7 +19,7 @@ const IdeaSpaceCard = ({ ideaSpace }) => {
       <div className="relative h-48">
         <div className="absolute inset-0 bg-black/40"></div>
         <img 
-          src={ideaSpace.thumbnail} 
+          src={ideaSpace.thumbnailUrl} 
           alt={ideaSpace.title}
           className="w-full h-full object-cover"
         />

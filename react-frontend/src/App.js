@@ -11,9 +11,11 @@ import Idea from './screens/idea.js';
 import ChallengeIdea from './screens/challenge_idea';
 import Profile from './screens/profile';
 import IdeaSpace from './screens/idea_space';
+import {IdeaSpaceProvider} from './contexts/IdeaSpaceContext';
 function App() {
   return (
     <Provider store={store}>
+      <IdeaSpaceProvider>
       <Router>
         <Routes>
           <Route path="/" element={<Home />} /> 
@@ -24,10 +26,12 @@ function App() {
           <Route path="/idea" element={<Idea />} />
           <Route path="/challenge_idea" element={<ChallengeIdea />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/idea-space/:topic" element={<IdeaSpace />} />
+          <Route path="/idea-space/:id" element={<IdeaSpace />} />
+
           {/* Add other routes as needed */}
         </Routes>
       </Router>
+      </IdeaSpaceProvider>
     </Provider>
   );
 }

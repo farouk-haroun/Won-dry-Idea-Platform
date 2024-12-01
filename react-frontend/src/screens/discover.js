@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Bell, Menu, Filter, X, Calendar, ChevronDown } from 'lucide-react';
 import ChallengeCard from '../components/ChallengeCard';
+import IdeaCard from '../components/IdeaCard';
+import IdeaSpaceCard from '../components/IdeaSpaceCard';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/constants';
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,8 +11,13 @@ import ProfilePopup from '../components/ProfilePopup';
 import AdminCreateChallengePopup from '../components/AdminCreateChallengePopup';
 
 const Discover = () => {
-  const [selectedOptions, setSelectedOptions] = useState(['Challenges']);
+  const [selectedOptions, setSelectedOptions] = useState('Challenges');
   const [challenges, setChallenges] = useState([]);
+  const [ideaSpaces, setIdeaSpaces] = useState([]);
+  const [ideas, setIdeas] = useState([]);
+  const toggleOption = (option) => {
+    setSelectedOptions(option);
+  };
   
   
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -33,14 +40,31 @@ const Discover = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If searchQuery is empty, fetch all challenges; otherwise, search
-    if (searchQuery.trim() === '') {
+    if (selectedOptions === 'Challenges') {
       fetchChallenges();
-    } else {
-      searchChallenges();
+    } else if (selectedOptions === 'Idea Spaces') {
+      fetchIdeaSpaces();
+    } else if (selectedOptions === 'Ideas') {
+      fetchIdeas();
     }
-  }, [searchQuery]);
-
+  }, [selectedOptions]);
+  const fetchIdeaSpaces = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/ideaspaces`);
+      // console.log('Fetched Idea Spaces:', response.data);
+      setIdeaSpaces(response.data.ideaSpaces);
+    } catch (error) {
+      console.error('Error fetching idea spaces:', error);
+    }
+  };
+  const fetchIdeas = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/ideas/ideas`);
+      setIdeas(response.data);
+    } catch (error) {
+      console.error('Error fetching ideas:', error);
+    }
+  };
   // useEffect(() => {
   //   if (searchQuery === '') {
   //     fetchChallenges();
@@ -53,7 +77,7 @@ const Discover = () => {
         params: { sortBy },
       });
       // console.log(response.data);
-      
+      // console.log('Fetched Challenge Spaces:', response.data);
       setChallenges(response.data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
@@ -110,16 +134,7 @@ const handleSortChange = (e) => {
   };
   const isSelected = (option) => selectedOptions.includes(option);
 
-  const toggleOption = (option) => {
-    setSelectedOptions(prevSelected => {
-      if (prevSelected.includes(option)) {
-        if (prevSelected.length === 1) return prevSelected;
-        return prevSelected.filter(item => item !== option);
-      } else {
-        return [...prevSelected, option];
-      }
-    });
-  };
+  
 
   const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
 
@@ -186,27 +201,34 @@ const handleSortChange = (e) => {
       </header>
       {feedbackMessage && <div className="bg-yellow-100 text-yellow-800 p-2 mb-4 rounded">{feedbackMessage}</div>}
       <div className="mb-4 mt-8 flex justify-between items-center">
-        <div className="flex flex-wrap gap-2">
-          <span className="text-gray-600 text-sm mr-2 flex items-center">Show Me:</span>
-          <button 
-            className={`px-4 py-2 rounded-full text-sm ${isSelected('Challenges') ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border'}`}
-            onClick={() => toggleOption('Challenges')}
-          >
-            Challenges
-          </button>
-          <button 
-            className={`px-4 py-2 rounded-full text-sm ${isSelected('Ideas') ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border'}`}
-            onClick={() => toggleOption('Ideas')}
-          >
-            Ideas
-          </button>
-          <button 
-            className={`px-4 py-2 rounded-full text-sm ${isSelected('Idea Spaces') ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border'}`}
-            onClick={() => toggleOption('Idea Spaces')}
-          >
-            Idea Spaces
-          </button>
-        </div>
+      <div className="flex flex-wrap gap-2">
+  <span className="text-gray-600 text-sm mr-2 flex items-center">Show Me:</span>
+  <button
+    className={`px-4 py-2 rounded-full text-sm ${
+      selectedOptions === 'Challenges' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border'
+    }`}
+    onClick={() => toggleOption('Challenges')}
+  >
+    Challenges
+  </button>
+  <button
+    className={`px-4 py-2 rounded-full text-sm ${
+      selectedOptions === 'Ideas' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border'
+    }`}
+    onClick={() => toggleOption('Ideas')}
+  >
+    Ideas
+  </button>
+  <button
+    className={`px-4 py-2 rounded-full text-sm ${
+      selectedOptions === 'Idea Spaces' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border'
+    }`}
+    onClick={() => toggleOption('Idea Spaces')}
+  >
+    Idea Spaces
+  </button>
+</div>
+
         <div className="flex items-center space-x-4">
         <div className="relative">
   <form onSubmit={handleSearchSubmit}>
@@ -241,14 +263,23 @@ const handleSortChange = (e) => {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {challenges.map((challenge) => (
-          <ChallengeCard
-            key={challenge._id}
-            challenge={challenge}
-            onChallengeDeleted={handleChallengeDeleted}
-            onChallengeArchived={handleChallengeArchived}
-          />
-        ))}
+      {selectedOptions === 'Challenges' &&
+    challenges.map((challenge) => (
+      <ChallengeCard
+        key={challenge._id}
+        challenge={challenge}
+        onChallengeDeleted={handleChallengeDeleted}
+        onChallengeArchived={handleChallengeArchived}
+      />
+    ))}
+  {selectedOptions === 'Ideas' &&
+    challenges.map((idea) => (
+      <IdeaCard key={idea._id} idea={idea} />
+    ))}
+  {selectedOptions === 'Idea Spaces' &&
+    ideaSpaces.map((ideaSpace) => (
+      <IdeaSpaceCard key={ideaSpace._id} ideaSpace={ideaSpace} />
+    ))}
       </div>
 
       <footer className="mt-8 text-center text-gray-500 text-sm">

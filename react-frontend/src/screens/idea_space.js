@@ -1,18 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Search, Bell, Menu, Star, Share2, Eye, ArrowLeft, Filter, MessageCircle } from 'lucide-react';
 import ProfilePopup from '../components/ProfilePopup';
-import ChallengeCard from '../components/ChallengeCard';
+import IdeaSpaceCard from '../components/IdeaSpaceCard';
 import { Dialog, Transition } from '@headlessui/react';
 import { Calendar, ChevronDown, X } from 'lucide-react';
-
+import axios from 'axios';
+import { API_BASE_URL } from '../utils/constants';
+import { useIdeaSpace } from '../contexts/IdeaSpaceContext';
 const IdeaSpace = () => {
+  const { id } = useParams();
+  // console.log(id)
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
-  const [showType, setShowType] = useState('Challenges');
+  const [showType, setShowType] = useState('Idea Spaces');
+  const { setSelectedIdeaSpaceId } = useIdeaSpace();
+  const [ideaSpace, setIdeaSpace] = useState([null]);
+  const [isLoading, setIsLoading] = useState(true); 
+  // const [isFilterOpen, setIsFilterOpen] = useState(false);
   const navigate = useNavigate();
-  const { topic } = useParams();
+  const extractId = (idString) => {
+    return idString.split('-')[0]; // Get the part before the first dash
+  };
 
+// Fetch the IdeaSpace data from the backend
+useEffect(() => {
+  const fetchIdeaSpace = async () => {
+    try {
+      const actualId = extractId(id); // Extract the ID from the URL
+      // console.log("Extracted ID:", actualId); 
+      const response = await axios.get(`${API_BASE_URL}/ideaspaces/${actualId}`);
+      if (response.data) {
+        setIdeaSpace(response.data); // Set the IdeaSpace data
+        console.log("IdeaSpace:", response.data);
+        setSelectedIdeaSpaceId(response.data._id); // Optionally set the ID in context
+      }
+    } catch (error) {
+      console.error('Error fetching IdeaSpace:', error);
+    } finally {
+      setIsLoading(false); // Stop loading after data fetch is complete
+    }
+  };
+  if (id) {
+    fetchIdeaSpace(); // Fetch the IdeaSpace when the component is mounted
+  }
+}, [id, setSelectedIdeaSpaceId]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState({
     myContent: false,
@@ -25,7 +57,7 @@ const IdeaSpace = () => {
     publishDateTo: '2024-09-05',
     keywords: ['SUSTAINABILITY'],
   });
-  const [challenges] = useState([]);
+
 
   const toggleFilter = () => setIsFilterOpen(!isFilterOpen);
 
@@ -50,7 +82,12 @@ const IdeaSpace = () => {
     navigate('/login');
   };
 
+  if (!ideaSpace) {
+    return <div>Loading...</div>; // Show a loading state while fetching data
+  }
+  console.log(ideaSpace.thumbnailUrl)
   return (
+    
     <div className="bg-[#fdfbf6] min-h-screen">
       {/* Header */}
       <header className="flex items-center justify-between p-4 bg-white">
@@ -88,7 +125,7 @@ const IdeaSpace = () => {
       <div 
         className="p-4 h-64 bg-cover bg-center"
         style={{
-          backgroundImage: 'url(https://images.pexels.com/photos/1148820/pexels-photo-1148820.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2)',
+          backgroundImage: ideaSpace.thumbnailUrl ? `url(${ideaSpace.thumbnailUrl.replace(/\s/g, '%20')})` : 'none', // Ensure the URL is only used if available
           backgroundColor: 'rgba(0,0,0,0.5)',
           backgroundBlendMode: 'overlay'
         }}
@@ -101,7 +138,7 @@ const IdeaSpace = () => {
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-2xl font-bold text-white">Wond'ry {topic?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Studio</h1>
+            <h1 className="text-2xl font-bold text-white">{ideaSpace.title}</h1>
           </div>
           <div className="flex items-center space-x-4">
             {/* <button className="bg-[#4CAF50] text-white px-6 py-2 rounded-full hover:bg-[#45a049]">
@@ -141,13 +178,9 @@ const IdeaSpace = () => {
         <div className="container mx-auto py-8 px-4">
           {/* Welcome Section */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-4">Welcome to the Commodore Cup 2023!</h2>
+            <h2 className="text-2xl font-bold mb-4">Welcome to the {ideaSpace.title}!</h2>
             <p className="text-gray-700 mb-4">
-              We are thrilled to announce the inaugural Commodore Cup, a campus-wide design challenge hosted by the Wond'ry,
-              Vanderbilt University's Innovation Center. The theme of the 2023 Commodore Cup is sustainability. This year's challenge is
-              made possible in collaboration with the Vanderbilt University Division of Administration and Clearloop. Participation is open
-              to all Vanderbilt University staff, students, and faculty, who can participate as individuals or teams of up to 4 people. No
-              prior sustainability or design experience necessary!
+              {ideaSpace.description}
             </p>
             <p className="text-gray-700">
               Participating individuals and teams will submit a design for one of the following design challenge tracks:
@@ -276,8 +309,8 @@ const IdeaSpace = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {challenges.map((challenge) => (
-              <ChallengeCard
+            {ideaSpace.map((challenge) => (
+              <IdeaSpaceCard
                 key={challenge._id}
                 challenge={challenge}
               />

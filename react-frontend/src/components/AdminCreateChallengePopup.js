@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Upload, Plus } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/constants';
@@ -10,10 +10,11 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
     organizers: [],
     description: '',
     thumbnail: null,
+    ideaSpaceId: '',
     category: 'SUSTAINABILITY',
     status: 'open'
   });
-
+  const [ideaSpaces, setIdeaSpaces] = useState([]); // Store the available idea spaces
   const categories = [
     'SUSTAINABILITY',
     'SOCIAL INNOVATION',
@@ -22,6 +23,20 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
     'EDUCATION'
   ];
 
+  useEffect(() => {
+    // Fetch available idea spaces when the popup is opened
+    if (isOpen) {
+      const fetchIdeaSpaces = async () => {
+        try {
+          const response = await axios.get(`${API_BASE_URL}/ideaspaces`);
+          setIdeaSpaces(response.data.ideaSpaces); // Set the fetched idea spaces
+        } catch (error) {
+          console.error('Error fetching idea spaces:', error);
+        }
+      };
+      fetchIdeaSpaces();
+    }
+  }, [isOpen]);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -123,7 +138,23 @@ const AdminCreateChallengePopup = ({ isOpen, onClose }) => {
                   ))}
                 </select>
               </div>
-
+              <div>
+                <label className="block text-gray-700 mb-2">Idea Space:</label>
+                <select
+                  name="ideaSpaceId"
+                  value={formData.ideaSpaceId}
+                  onChange={handleChange}
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                >
+                  <option value="">Select an Idea Space</option>
+                  {ideaSpaces.map((space) => (
+                    <option key={space._id} value={space._id}>
+                      {space.title} {/* Assuming each IdeaSpace has a title */}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-gray-700 mb-2">Stages:</label>
                 <div className="space-y-4">
