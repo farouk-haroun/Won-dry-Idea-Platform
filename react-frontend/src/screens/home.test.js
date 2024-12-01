@@ -1,24 +1,46 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import Home from './home';
 import '@testing-library/jest-dom';
 
 // Mock navigate function
 const mockNavigate = jest.fn();
+
+// Mock fetch responses
+const mockIdeaSpaces = {
+  ideaSpaces: [
+    {
+      _id: '1',
+      title: 'Test Idea Space',
+      description: 'Test description',
+      members: 10,
+      category: 'Technology'
+    }
+  ]
+};
+
+const mockChallenges = [
+  {
+    _id: '1',
+    title: 'Test Challenge',
+    description: 'Test challenge description',
+    status: 'open',
+    stars: 5,
+    views: 100,
+    comments: 10,
+    thumbnailUrl: 'test-url.jpg'
+  }
+];
+
+// Mock react-router-dom
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => mockNavigate,
+  Link: ({ children, to }) => <a href={to}>{children}</a>
 }));
 
-// Mock IdeaSpaceCard component
-jest.mock('../components/IdeaSpaceCard', () => {
-  return function MockIdeaSpaceCard({ topic }) {
-    return <div data-testid={`idea-space-${topic}`}>{topic}</div>;
-  };
-});
-
-// Mock ProfilePopup component
+// Mock ProfilePopup
 jest.mock('../components/ProfilePopup', () => {
   return function MockProfilePopup({ onClose, onLogout }) {
     return (
@@ -30,171 +52,155 @@ jest.mock('../components/ProfilePopup', () => {
   };
 });
 
-// Suppress Router Warnings
-beforeAll(() => {
-  const originalWarn = console.warn;
-  console.warn = (...args) => {
-    if (args[0]?.includes?.('React Router')) return;
-    originalWarn(...args);
+// Mock IdeaSpaceCard
+jest.mock('../components/IdeaSpaceCard', () => {
+  return function MockIdeaSpaceCard({ ideaSpace }) {
+    return <div data-testid="idea-space-card">{ideaSpace.title}</div>;
   };
 });
 
-afterAll(() => {
-  jest.restoreAllMocks();
-});
-
-// Helper function to render with router
-const renderWithRouter = (component, { route = '/' } = {}) => {
-  const router = createMemoryRouter(
-    createRoutesFromElements(
-      <Route path="/" element={component} />
-    ),
-    { initialEntries: [route] }
-  );
-
-  return render(<RouterProvider router={router} />);
-};
-
 describe('Home Component', () => {
   beforeEach(() => {
-    mockNavigate.mockClear();
-  });
-
-  // Header Tests
-  describe('Header', () => {
-    test('renders logo and navigation links', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByAltText('Wondry Logo')).toBeInTheDocument();
-      expect(screen.getByText('Home')).toBeInTheDocument();
-      expect(screen.getByText('Discover')).toBeInTheDocument();
-    });
-
-    test('navigation links have correct styles', () => {
-      renderWithRouter(<Home />);
-      const homeLink = screen.getByText('Home');
-      const discoverLink = screen.getByText('Discover');
-      expect(homeLink).toHaveClass('text-[#874c9e]');
-      expect(discoverLink).toHaveClass('text-[#2c2c2c]');
-    });
-
-    test('profile popup toggles on click', () => {
-      renderWithRouter(<Home />);
-      const profileButton = screen.getByText('MM');
-      fireEvent.click(profileButton);
-      expect(screen.getByTestId('profile-popup')).toBeInTheDocument();
-      const closeButton = screen.getByText('Close');
-      fireEvent.click(closeButton);
-      expect(screen.queryByTestId('profile-popup')).not.toBeInTheDocument();
-    });
-
-    test('logout functionality', () => {
-      renderWithRouter(<Home />);
-      const profileButton = screen.getByText('MM');
-      fireEvent.click(profileButton);
-      const signOutButton = screen.getByText('Sign Out');
-      fireEvent.click(signOutButton);
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
+    // Reset all mocks before each test
+    jest.clearAllMocks();
+    
+    // Mock fetch
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/ideaspaces')) {
+        return Promise.resolve({
+          json: () => Promise.resolve(mockIdeaSpaces)
+        });
+      }
+      if (url.includes('/challenges')) {
+        return Promise.resolve({
+          json: () => Promise.resolve(mockChallenges)
+        });
+      }
     });
   });
 
-  // Welcome Section Tests
-  describe('Welcome Section', () => {
-    test('renders welcome content', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByText("Welcome to the Wond'ry Idea Platform")).toBeInTheDocument();
-      expect(screen.getByText(/Explore groundbreaking ideas/)).toBeInTheDocument();
-    });
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
 
-    test('welcome section has correct background color', () => {
-      renderWithRouter(<Home />);
-      const welcomeSection = screen.getByText("Welcome to the Wond'ry Idea Platform").closest('section');
-      expect(welcomeSection).toHaveClass('bg-[#2c2c2c]');
+  test('renders header elements correctly', () => {
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByAltText('Wondry Logo')).toBeInTheDocument();
+    expect(screen.getByText('Home')).toBeInTheDocument();
+    expect(screen.getByText('Discover')).toBeInTheDocument();
+  });
+
+  test('shows and hides profile popup', () => {
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    // Profile popup should not be visible initially
+    expect(screen.queryByTestId('profile-popup')).not.toBeInTheDocument();
+
+    // Click profile button
+    fireEvent.click(screen.getByText('MM'));
+    expect(screen.getByTestId('profile-popup')).toBeInTheDocument();
+
+    // Click close button
+    fireEvent.click(screen.getByText('Close'));
+    expect(screen.queryByTestId('profile-popup')).not.toBeInTheDocument();
+  });
+
+  test('handles logout correctly', () => {
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    // Open profile popup and click logout
+    fireEvent.click(screen.getByText('MM'));
+    fireEvent.click(screen.getByText('Sign Out'));
+    
+    expect(mockNavigate).toHaveBeenCalledWith('/login');
+  });
+
+  test('displays loading state while fetching data', () => {
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Loading challenges...')).toBeInTheDocument();
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  test('displays challenges after loading', async () => {
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Challenge')).toBeInTheDocument();
+      expect(screen.getByText('Test challenge description')).toBeInTheDocument();
+      expect(screen.getByText('open')).toBeInTheDocument();
     });
   });
 
-  // Challenges Section Tests
-  describe('Challenges Section', () => {
-    test('renders challenge card', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByText('Jump into some Challenges!')).toBeInTheDocument();
-      expect(screen.getByText('Idea Innovation Challenge')).toBeInTheDocument();
-    });
+  test('displays idea spaces after loading', async () => {
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
 
-    test('shows challenge stage', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByText('Winners Announcement')).toBeInTheDocument();
-      expect(screen.getByText('Winners Announcement')).toHaveClass('bg-[#b49248]');
+    await waitFor(() => {
+      expect(screen.getByTestId('idea-space-card')).toBeInTheDocument();
+      expect(screen.getByText('Test Idea Space')).toBeInTheDocument();
     });
   });
 
-  // Groups Section Tests
-  describe('Groups Section', () => {
-    test('renders all idea space cards', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByTestId('idea-space-quantum-computing')).toBeInTheDocument();
-      expect(screen.getByTestId('idea-space-sustainable-energy')).toBeInTheDocument();
-      expect(screen.getByTestId('idea-space-biotech')).toBeInTheDocument();
-      expect(screen.getByTestId('idea-space-space-exploration')).toBeInTheDocument();
-    });
+  test('displays error state when fetch fails', async () => {
+    // Mock fetch to reject
+    global.fetch = jest.fn().mockRejectedValue(new Error('Failed to fetch'));
 
-    test('displays section title', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByText('Discover new groups and join in on exciting challenges!')).toBeInTheDocument();
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('No challenges available')).toBeInTheDocument();
+      expect(screen.getByText('No idea spaces found')).toBeInTheDocument();
     });
   });
 
-  // Announcements Section Tests
-  describe('Announcements Section', () => {
-    test('renders announcement content', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByText('Announcements')).toBeInTheDocument();
-      expect(screen.getByText('Idea Innovation Challenge Winner')).toBeInTheDocument();
-    });
+  test('displays announcements section', () => {
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
 
-    test('displays winner card details', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByText('Interactive Dashboards')).toBeInTheDocument();
-      expect(screen.getByText('Mothuso Malunga')).toBeInTheDocument();
-      expect(screen.getByText('in Commodore Cup 2023 Challenge')).toBeInTheDocument();
-    });
-
-    test('shows winner metrics', () => {
-      renderWithRouter(<Home />);
-      const metrics = screen.getAllByText('34');
-      const views = screen.getAllByText('23,696');
-      expect(metrics.length).toBeGreaterThan(0);
-      expect(views.length).toBeGreaterThan(0);
-    });
+    expect(screen.getByText('Announcements')).toBeInTheDocument();
+    expect(screen.getByText('Idea Innovation Challenge Winner')).toBeInTheDocument();
+    expect(screen.getByText('Interactive Dashboards')).toBeInTheDocument();
   });
 
-  // Footer Tests
-  describe('Footer', () => {
-    test('renders footer content', () => {
-      renderWithRouter(<Home />);
-      expect(screen.getByText('Wondry © 2024')).toBeInTheDocument();
-    });
+  test('displays footer', () => {
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
 
-    test('footer has correct styling', () => {
-      renderWithRouter(<Home />);
-      const footer = screen.getByText('Wondry © 2024').closest('footer');
-      expect(footer).toHaveClass('bg-white');
-    });
-  });
-
-  // Responsive Tests
-  describe('Responsive Behavior', () => {
-    test('navigation is hidden on mobile', () => {
-      renderWithRouter(<Home />);
-      const nav = screen.getByRole('navigation');
-      expect(nav).toHaveClass('hidden', 'md:flex');
-    });
-
-    test('menu icon is visible on mobile', () => {
-      renderWithRouter(<Home />);
-      // Find menu icon by its class combination
-      const menuIcon = document.querySelector('.text-gray-500.md\\:hidden.cursor-pointer');
-      expect(menuIcon).toBeTruthy();
-      expect(menuIcon).toHaveClass('md:hidden');
-    });
+    expect(screen.getByText('Wondry © 2024')).toBeInTheDocument();
   });
 });

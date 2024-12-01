@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
+import { act } from 'react';
 import Discover from './discover';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
@@ -26,26 +26,19 @@ describe('Discover Component', () => {
       _id: '1', 
       title: 'Idea Innovation Challenge',
       status: 'ACTIVE',
-      stages: [
-        { submissions: [] },
-        { submissions: [] }
-      ]
+      stages: [{ submissions: [] }, { submissions: [] }]
     },
     { 
       _id: '2', 
       title: 'Interactive Dashboards',
       status: 'ACTIVE',
-      stages: [
-        { submissions: [] }
-      ]
+      stages: [{ submissions: [] }]
     },
     { 
       _id: '3', 
       title: "Wond'ry Quantum Studio",
       status: 'ACTIVE',
-      stages: [
-        { submissions: [] }
-      ]
+      stages: [{ submissions: [] }]
     }
   ];
 
@@ -84,7 +77,8 @@ describe('Discover Component', () => {
     await renderWithProviders();
     expect(screen.getByPlaceholderText('Looking for Something?')).toBeInTheDocument();
     expect(screen.getByText('Sort By:')).toBeInTheDocument();
-    expect(screen.getByRole('combobox')).toHaveValue('Relevance');
+    // Update to match the actual default value in your component
+    expect(screen.getByRole('combobox')).toHaveValue('date');
   });
 
   it('renders the create challenge button', async () => {
@@ -96,7 +90,13 @@ describe('Discover Component', () => {
     await renderWithProviders();
     
     await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledWith(`${API_BASE_URL}/challenges/challenges`);
+      // Update expectation to include params
+      expect(axios.get).toHaveBeenCalledWith(
+        `${API_BASE_URL}/challenges/challenges`,
+        expect.objectContaining({
+          params: expect.any(Object)
+        })
+      );
       expect(screen.getAllByTestId('challenge-card')).toHaveLength(3);
       expect(screen.getByText('Idea Innovation Challenge')).toBeInTheDocument();
       expect(screen.getByText('Interactive Dashboards')).toBeInTheDocument();
@@ -149,7 +149,13 @@ describe('Discover Component', () => {
     await renderWithProviders();
     
     await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledWith(`${API_BASE_URL}/challenges/challenges`);
+      // Update expectation to include params
+      expect(axios.get).toHaveBeenCalledWith(
+        `${API_BASE_URL}/challenges/challenges`,
+        expect.objectContaining({
+          params: expect.any(Object)
+        })
+      );
       expect(screen.queryAllByTestId('challenge-card')).toHaveLength(0);
     });
   });

@@ -1,102 +1,158 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import Challenge from './challenge';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import axios from 'axios';
+import Challenge from '../screens/challenge';
+
+// Mock modules
+jest.mock('axios');
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => jest.fn(),
+  useParams: () => ({ id: '123' })
+}));
+
+// Mock data
+const mockChallenge = {
+  title: 'Test Challenge',
+  description: 'Test Description',
+  format: 'Test Format',
+  tracks: ['Track 1', 'Track 2'],
+  stages: [
+    {
+      name: 'Stage 1',
+      deadline: new Date(Date.now() + 86400000).toISOString(), // tomorrow
+      submissions: [{ id: 1 }]
+    },
+    {
+      name: 'Stage 2',
+      deadline: new Date(Date.now() - 86400000).toISOString(), // yesterday
+      submissions: []
+    }
+  ],
+  community: {
+    name: "Wond'ry Innovation Center",
+    avatar: ''
+  },
+  metrics: {
+    views: 100,
+    totalIdeas: 50,
+    activeUsers: 25
+  }
+};
+
+// Wrapper component for routing
+const renderWithRouter = (component) => {
+  return render(
+    <BrowserRouter>
+      {component}
+    </BrowserRouter>
+  );
+};
 
 describe('Challenge Component', () => {
-  // Helper function to render the component with Router context
-  const renderWithRouter = (component) => {
-    return render(<Router>{component}</Router>);
-  };
-
-  // Test to ensure the challenge title (h1) and description are rendered correctly
-  it('renders the challenge title and description', () => {
-    renderWithRouter(<Challenge />);
-
-    // Checking that the main heading (h1) with the challenge title is present
-    expect(screen.getByRole('heading', { level: 1, name: /Commodore Cup 2023 Sustainability Challenge/i })).toBeInTheDocument();
-
-    // Verifying that the description paragraph is displayed
-    expect(screen.getByText(/We are thrilled to announce the inaugural Commodore Cup/i)).toBeInTheDocument();
+  beforeEach(() => {
+    // Reset all mocks before each test
+    jest.clearAllMocks();
+    
+    // Setup default axios responses
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/challenges/123')) {
+        return Promise.resolve({ data: mockChallenge });
+      }
+      return Promise.reject(new Error('not found'));
+    });
   });
 
-  // Test to verify the navigation links are displayed
-  it('renders navigation links', () => {
-    renderWithRouter(<Challenge />);
+  describe('Rendering', () => {
+    test('renders loading state initially', () => {
+      renderWithRouter(<Challenge />);
+      expect(screen.getByText('Loading...')).toBeInTheDocument();
+    });
 
-    // Checking for the presence of navigation links
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('Discover')).toBeInTheDocument();
+    test('renders challenge data after loading', async () => {
+      renderWithRouter(<Challenge />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Test Challenge')).toBeInTheDocument();
+        expect(screen.getByText('Test Description')).toBeInTheDocument();
+      });
+    });
+
+    test('renders all stages correctly', async () => {
+      renderWithRouter(<Challenge />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Stage 1')).toBeInTheDocument();
+        expect(screen.getByText('Stage 2')).toBeInTheDocument();
+      });
+    });
+
+    test('renders community information', async () => {
+      renderWithRouter(<Challenge />);
+      
+      await waitFor(() => {
+        expect(screen.getByText("Wond'ry Innovation Center")).toBeInTheDocument();
+      });
+    });
+
+    test('renders metrics when available', async () => {
+      renderWithRouter(<Challenge />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('100')).toBeInTheDocument(); // views
+        expect(screen.getByText('50')).toBeInTheDocument(); // total ideas
+        expect(screen.getByText('25')).toBeInTheDocument(); // active users
+      });
+    });
   });
 
-  // Test to ensure that all challenge stages are rendered correctly
-  it('renders challenge stages', () => {
-    renderWithRouter(<Challenge />);
+  describe('User Interactions', () => {
+    test('switches between overview and ideas tabs', async () => {
+      renderWithRouter(<Challenge />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Test Challenge')).toBeInTheDocument();
+      });
 
-    // Checking that each stage of the challenge is present
-    expect(screen.getByText('1st Evaluation')).toBeInTheDocument();
-    expect(screen.getByText('2nd Round Evaluation')).toBeInTheDocument();
-    expect(screen.getByText('Final Showcase')).toBeInTheDocument();
-    expect(screen.getByText('Winners Announcement')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('Ideas'));
+      expect(screen.getByText('Solar-Powered Campus Shuttles')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Overview'));
+      expect(screen.getByText('Test Description')).toBeInTheDocument();
+    });
+
+    test('opens team dialog when clicking Join Challenge', async () => {
+      renderWithRouter(<Challenge />);
+      
+      await waitFor(() => {
+        fireEvent.click(screen.getByText('Join Challenge'));
+      });
+
+      expect(screen.getByText('Join a Team')).toBeInTheDocument();
+    });
   });
 
-  // Test to verify that the "Join Challenge", star, and share buttons are rendered
-  it('renders join, star, and share buttons', () => {
-    renderWithRouter(<Challenge />);
+  describe('API Interactions', () => {
+    test('handles API errors gracefully', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      
+      axios.get.mockRejectedValueOnce({
+        response: {
+          status: 500,
+          data: { message: 'Server Error' }
+        }
+      });
 
-    // Checking for the "Join Challenge" button
-    expect(screen.getByText(/Join Challenge/i)).toBeInTheDocument();
+      renderWithRouter(<Challenge />);
+      
+      await waitFor(() => {
+        expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Server Error'));
+      });
 
-    // Checking for the presence of star and share buttons (2nd and 3rd buttons on the page)
-    const starButton = screen.getAllByRole('button')[1];
-    const shareButton = screen.getAllByRole('button')[2];
-
-    expect(starButton).toBeInTheDocument();
-    expect(shareButton).toBeInTheDocument();
-  });
-
-  // Test to ensure that all challenge organizers are displayed
-  it('renders challenge organizers', () => {
-    renderWithRouter(<Challenge />);
-
-    // Verifying that each organizer's name is displayed
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('Samantha Pene')).toBeInTheDocument();
-    expect(screen.getByText('Michael Sybil')).toBeInTheDocument();
-    expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-  });
-
-  // Test to verify that the community section is displayed correctly
-  it('renders the community section', () => {
-    renderWithRouter(<Challenge />);
-
-    // Checking for the community name in the community section
-    expect(screen.getByText('Wondry Quantum Studio')).toBeInTheDocument();
-  });
-
-  // Test to ensure that key metrics are displayed correctly
-  it('renders key metrics', () => {
-    renderWithRouter(<Challenge />);
-
-    // Fetching all elements with the number "521" and ensuring there are 3 metrics displayed
-    const metrics = screen.getAllByText('521');
-    expect(metrics.length).toBe(3);
-
-    // Verifying that each metric's label is displayed
-    expect(screen.getByText('views')).toBeInTheDocument();
-    expect(screen.getByText('total ideas')).toBeInTheDocument();
-    expect(screen.getByText('active users')).toBeInTheDocument();
-  });
-
-  // Test to verify that the "Join Challenge" button is clickable
-  it('triggers events when clicking on buttons', () => {
-    renderWithRouter(<Challenge />);
-
-    // Simulating a click event on the "Join Challenge" button
-    const joinButton = screen.getByText(/Join Challenge/i);
-    fireEvent.click(joinButton);
-
-    // Checking if the button is still in the document after the click
-    expect(joinButton).toBeInTheDocument();
+      consoleSpy.mockRestore();
+      alertMock.mockRestore();
+    });
   });
 });
