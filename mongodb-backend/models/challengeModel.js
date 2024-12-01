@@ -24,7 +24,7 @@ const challengeSchema = new mongoose.Schema({
   ideaSpace: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'IdeaSpace',
-    required: false
+    required: true
   }
 }, {
   timestamps: true

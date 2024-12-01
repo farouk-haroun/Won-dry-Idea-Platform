@@ -4,10 +4,11 @@ import { upload, uploadToS3 } from '../middleware/upload.js';
 import s3 from '../middleware/s3.js';
 import 'dotenv/config';
 import Team from '../models/teamModel.js';
-// Get all challenges
+import IdeaSpace from '../models/ideaSpaceModel.js'; // Import the IdeaSpace model
+// Get all challenges linked to a specific idea space
 export const getAllChallenges = async (req, res) => {
   try {
-    const { sortBy, category, status, startDate, endDate } = req.query;
+    const { sortBy, category, status, startDate, endDate, ideaSpaceId } = req.query; // Added ideaSpaceId to query
     const filter = {};
 
     // Apply filters based on query parameters
@@ -26,6 +27,10 @@ export const getAllChallenges = async (req, res) => {
       };
     }
 
+    if (ideaSpaceId) {
+      filter.ideaSpace = ideaSpaceId;  // Filter by ideaSpaceId if provided
+    }
+
     // Define sorting criteria separately
     let sortCriteria = {};
     if (sortBy === 'popularity') {
@@ -40,7 +45,7 @@ export const getAllChallenges = async (req, res) => {
     const challenges = await Challenge.find(filter)
       .sort(sortCriteria)
       .populate('organizers stages.submissions')
-      .populate('ideaSpace');
+      .populate('ideaSpace');  // Populate the ideaSpace field
 
     res.status(200).json(challenges);
   } catch (error) {
@@ -49,18 +54,31 @@ export const getAllChallenges = async (req, res) => {
   }
 };
 
+
 // Create a new challenge with S3 file upload
 export const createChallenge = [
   upload.single('thumbnail'),
   async (req, res) => {
     try {
-      const { title, description, stages, status, category } = req.body;
+      const { title, description, stages, status, category, ideaSpaceId } = req.body;
+
+      // Ensure ideaSpaceId is passed and valid
+      if (!ideaSpaceId) {
+        return res.status(400).json({ message: 'IdeaSpace is required' });
+      }
+
       const parsedStages = stages ? JSON.parse(stages) : [];
       const organizerId = req.user?.id;
 
       let thumbnailUrl = null;
       if (req.file) {
         thumbnailUrl = await uploadToS3(req.file); // Upload to S3 and get URL
+      }
+
+      // Check if the provided ideaSpaceId exists in the database
+      const ideaSpace = await IdeaSpace.findById(ideaSpaceId);
+      if (!ideaSpace) {
+        return res.status(404).json({ message: 'IdeaSpace not found' });
       }
 
       const newChallenge = new Challenge({
@@ -71,6 +89,7 @@ export const createChallenge = [
         thumbnailUrl,
         status,
         category,
+        ideaSpace: ideaSpaceId  // Set the ideaSpaceId for the challenge
       });
 
       const savedChallenge = await newChallenge.save();
@@ -81,7 +100,6 @@ export const createChallenge = [
     }
   },
 ];
-
 export const deleteChallenge = async (req, res) => {
   const { id } = req.params;
 
