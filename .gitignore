@@ -53,3 +53,9 @@ dist/
 
 # OS generated files
 Thumbs.db
+
+
+# Ignore constants.js file in the utils folder
+react-frontend/src/utils/constants.js
+
+
