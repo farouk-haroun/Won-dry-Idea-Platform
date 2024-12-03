@@ -617,10 +617,10 @@
     "@smithy/types" "^3.6.0"
     tslib "^2.6.2"
 
-"@esbuild/win32-x64@0.21.5":
+"@esbuild/darwin-arm64@0.21.5":
   version "0.21.5"
-  resolved "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.21.5.tgz"
-  integrity sha512-tQd/1efJuzPC6rCFwEvLtci/xNFcTZknmXs98FYDfGE4wP9ClFV98nyKrzJKVPMhdDnjzLhdUyMX4PsQAPjwIw==
+  resolved "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.21.5.tgz"
+  integrity sha512-DwqXqZyuk5AiWWf3UfLiRDJ5EDd49zg6O9wclZ7kUMv2WRFr4HKjXp/5t8JZ11QbQfUS6/cRCKGwYhtNAY88kQ==
 
 "@jridgewell/sourcemap-codec@^1.5.0":
   version "1.5.0"
@@ -642,6 +642,14 @@
     semver "^7.3.5"
     tar "^6.1.11"
 
+"@mirohq/miro-api@^2.2.2":
+  version "2.2.2"
+  resolved "https://registry.npmjs.org/@mirohq/miro-api/-/miro-api-2.2.2.tgz"
+  integrity sha512-KoBjjMv8rXXSQtvAamT1YQ94vZ+Lofw/Gp4hvHYHzlHtc4A3UHkUl6vgBh2O+eHf5j/sUCJ+xe7JbQsyHoZVng==
+  dependencies:
+    form-data "^4.0.0"
+    node-fetch "^2.7.0"
+
 "@mongodb-js/saslprep@^1.1.5":
   version "1.1.9"
   resolved "https://registry.npmjs.org/@mongodb-js/saslprep/-/saslprep-1.1.9.tgz"
@@ -649,10 +657,10 @@
   dependencies:
     sparse-bitfield "^3.0.3"
 
-"@rollup/rollup-win32-x64-msvc@4.24.3":
+"@rollup/rollup-darwin-arm64@4.24.3":
   version "4.24.3"
-  resolved "https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.24.3.tgz"
-  integrity sha512-HGZgRFFYrMrP3TJlq58nR1xy8zHKId25vhmm5S9jETEfDf6xybPxsavFTJaufe2zgOGYJBskGlj49CwtEuFhWQ==
+  resolved "https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.24.3.tgz"
+  integrity sha512-QPW2YmkWLlvqmOa2OwrfqLJqkHm7kJCIMq9kOz40Zo9Ipi40kf9ONG5Sz76zszrmIZZ4hgRIkez69YnTHgEz1w==
 
 "@smithy/abort-controller@^3.1.5", "@smithy/abort-controller@^3.1.6":
   version "3.1.6"
@@ -1777,6 +1785,11 @@ fs.realpath@^1.0.0:
   resolved "https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz"
   integrity sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
 
+fsevents@~2.3.2, fsevents@~2.3.3:
+  version "2.3.3"
+  resolved "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz"
+  integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
+
 function-bind@^1.1.2:
   version "1.1.2"
   resolved "https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz"
@@ -2213,7 +2226,7 @@ node-addon-api@^5.0.0:
   resolved "https://registry.npmjs.org/node-addon-api/-/node-addon-api-5.1.0.tgz"
   integrity sha512-eh0GgfEkpnoWDq+VY8OyvYhFEzBk6jIYbRKdIlyTiAXIVJ8PyBaKb0rp7oDtoddbdoHWhq8wwr+XZ81F1rpNdA==
 
-node-fetch@^2.6.7:
+node-fetch@^2.6.7, node-fetch@^2.7.0:
   version "2.7.0"
   resolved "https://registry.npmjs.org/node-fetch/-/node-fetch-2.7.0.tgz"
   integrity sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==

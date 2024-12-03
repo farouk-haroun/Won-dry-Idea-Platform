@@ -23,7 +23,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/challenge/:id" element={<Challenge />} />
-          <Route path="/idea" element={<Idea />} />
+          <Route path="/idea/:id" element={<Idea />} />
           <Route path="/challenge_idea" element={<ChallengeIdea />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/idea-space/:id" element={<IdeaSpace />} />

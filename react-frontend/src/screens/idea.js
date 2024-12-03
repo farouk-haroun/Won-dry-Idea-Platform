@@ -1,15 +1,42 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Search, Bell, Menu } from 'lucide-react';
 import ProfilePopup from '../components/ProfilePopup';
+import axios from 'axios';
+import { API_BASE_URL } from '../utils/constants';
 
 const Idea = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [idea, setIdea] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  useEffect(() => {
+    const fetchIdea = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/ideas/${id}`);
+        setIdea(response.data);
+      } catch (error) {
+        console.error('Error fetching idea:', error);
+        alert('Error loading idea: ' + error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchIdea();
+    }
+  }, [id]);
 
   const handleLogout = () => {
     navigate('/login');
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
 
   return (
     <div className="bg-white h-screen flex flex-col">

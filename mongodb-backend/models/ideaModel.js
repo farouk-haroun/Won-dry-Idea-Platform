@@ -17,6 +17,11 @@ const ideaSchema = new mongoose.Schema({
   team: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
   brainstormingSession: { type: mongoose.Schema.Types.ObjectId, ref: 'BrainstormingSession' },
   challenge: { type: mongoose.Schema.Types.ObjectId, ref: 'Challenge' },
+  miroBoard: {
+    id: { type: String },
+    viewLink: { type: String },
+    editLink: { type: String }
+  },
   comments: [
     {
       text: String,

@@ -54,13 +54,9 @@ const ChallengeCard = ({ challenge, onChallengeDeleted, onChallengeArchived }) =
             alt="Challenge"
             className="w-full h-[256px] object-cover"
           />
-          <button className="absolute top-2 right-2 bg-white rounded-full p-1 shadow w-12 h-12 flex items-center justify-center">
-            <Star className="text-gray-400 w-5 h-5" />
-          </button>
         </div>
         <div className="p-4 text-left">
           <h3 className="font-bold text-lg mb-1">{title}</h3>
-          <p className="text-sm text-gray-600 mb-2">{description}</p>
           <span
             className={`inline-block text-xs px-2 py-1 rounded-full mb-2 ${
               status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'

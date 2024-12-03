@@ -29,6 +29,11 @@ const Challenge = () => {
   });
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
+  const [ideas, setIdeas] = useState([]);
+  const [newIdeaData, setNewIdeaData] = useState({
+    title: '',
+    description: '',
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,27 +41,23 @@ const Challenge = () => {
         setLoading(true);
         console.log('Fetching data for challenge:', id);
   
-        const [challengeRes, teamsRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/challenges/${id}`),
-        ]);
-  
+        const challengeRes = await axios.get(`${API_BASE_URL}/challenges/${id}`);
         const challengeData = challengeRes.data;
         if (!challengeData.community) {
           challengeData.community = { name: "Wond'ry Innovation Center", avatar: '' };
         }
         setChallenge(challengeData);
-      } catch (error) {
-        // If the error is 404 specifically for teams, handle it differently
-        if (error.response?.status === 404 && error.config?.url.includes('/teams')) {
-          console.log('No teams endpoint available for this challenge.');
-          setTeams([]);  // Set teams to an empty array if endpoint not found
-        } else {
-          console.error('Error fetching data:', error.response || error);
-          alert('Error loading challenge data: ' + 
-            (error.response?.data?.message || error.message) +
-            '\nStatus: ' + error.response?.status +
-            '\nEndpoint: ' + error.config?.url);
+  
+        try {
+          const ideasRes = await axios.get(`${API_BASE_URL}/ideas`);
+          setIdeas(ideasRes.data.filter(idea => idea.challenge === id));
+        } catch (ideasError) {
+          console.log('No ideas found or endpoint not available:', ideasError);
+          setIdeas([]);
         }
+      } catch (error) {
+        console.error('Error fetching challenge data:', error);
+        alert('Error loading challenge data: ' + error.message);
       } finally {
         setLoading(false);
       }
@@ -80,23 +81,6 @@ const Challenge = () => {
     setIsTeamDialogOpen(true);
   };
 
-  const handleCreateTeam = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${API_BASE_URL}/teams`, {
-        ...newTeamData,
-        challengeId: id
-      });
-      const teamsRes = await axios.get(`${API_BASE_URL}/challenges/${id}/teams`);
-      setTeams(teamsRes.data);
-      setIsCreateTeamDialogOpen(false);
-      setNewTeamData({ name: '', description: '' });
-      alert('Team created successfully');
-    } catch (error) {
-      console.error('Error creating team:', error);
-      alert('Error creating team: ' + error.message);
-    }
-  };
 
   const handleJoinTeam = async (teamId) => {
     try {
@@ -105,6 +89,40 @@ const Challenge = () => {
       alert('Joined team successfully');
     } catch (error) {
       console.error('Error joining team:', error);
+      alert('Error joining team: ' + error.message);
+    }
+  };
+
+  const handleCreateIdea = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_BASE_URL}/ideas`, {
+        ...newIdeaData,
+        challenge: id,
+        createdBy: token ? JSON.parse(atob(token.split('.')[1])).userId : null
+      });
+
+      setIdeas([...ideas, response.data]);
+      setIsCreateTeamDialogOpen(false);
+      setNewIdeaData({ title: '', description: '' });
+      alert('Idea created successfully!');
+    } catch (error) {
+      console.error('Error creating idea:', error);
+      alert('Error creating idea: ' + error.message);
+    }
+  };
+
+  const handleJoinIdea = async (ideaId) => {
+    try {
+      await axios.post(`${API_BASE_URL}/ideas/${ideaId}/join`);
+      // Refresh ideas list
+      const response = await axios.get(`${API_BASE_URL}/ideas`);
+      setIdeas(response.data.filter(idea => idea.challenge === id));
+      alert('Successfully joined the idea!');
+    } catch (error) {
+      console.error('Error joining idea:', error);
+      alert('Error joining idea: ' + error.message);
     }
   };
 
@@ -133,12 +151,6 @@ const Challenge = () => {
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
-
-  const ideas = [
-    { title: "Solar-Powered Campus Shuttles", category: "Transportation", stage: "Final Showcase", author: "Team Green", comments: 15, views: 230, ideas: 3, rating: 4 },
-    { title: "AI-Driven Energy Optimization", category: "Sustainability Dashboard", stage: "2nd Round Evaluation", author: "Tech Innovators", comments: 22, views: 180, ideas: 5, rating: 5 },
-    { title: "Bike-Sharing Program", category: "Transportation", stage: "1st Evaluation", author: "Eco Riders", comments: 8, views: 120, ideas: 2, rating: 3 },
-  ];
 
   return (
     <div className="bg-white">
@@ -184,12 +196,6 @@ const Challenge = () => {
             onClick={handleJoinChallenge}
           >
             Join Challenge
-          </button>
-          <button className="border border-gray-300 rounded-full p-2 mr-2">
-            <Star className="w-5 h-5" />
-          </button>
-          <button className="border border-gray-300 rounded-full p-2">
-            <Share2 className="w-5 h-5" />
           </button>
         </div>
 
@@ -266,8 +272,37 @@ const Challenge = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {ideas.map((idea, index) => (
-              <IdeaCard key={index} {...idea} />
+            {ideas.map((idea) => (
+              <div key={idea._id} className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <Link to={`/idea/${idea._id}`} className="block">
+                  <h3 className="text-xl font-semibold mb-2">{idea.title}</h3>
+                  <p className="text-gray-600 mb-4">{idea.description}</p>
+                </Link>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      {idea.createdBy?.name?.[0] || 'U'}
+                    </div>
+                    <span className="text-sm text-gray-600">{idea.createdBy?.name || 'Unknown'}</span>
+                  </div>
+                  <button
+                    onClick={() => handleJoinIdea(idea._id)}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm hover:bg-purple-700"
+                  >
+                    Join Idea
+                  </button>
+                </div>
+                {idea.miroBoard && (
+                  <a
+                    href={idea.miroBoard.viewLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 block text-purple-600 hover:text-purple-700"
+                  >
+                    Open Miro Board →
+                  </a>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -389,13 +424,13 @@ const Challenge = () => {
                     <X className="h-6 w-6" />
                   </button>
 
-                  <form onSubmit={handleCreateTeam} className="space-y-4">
+                  <form onSubmit={handleCreateIdea} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Team Name</label>
+                      <label className="block text-sm font-medium text-gray-700">Idea Title</label>
                       <input
                         type="text"
-                        value={newTeamData.name}
-                        onChange={(e) => setNewTeamData({ ...newTeamData, name: e.target.value })}
+                        value={newIdeaData.title}
+                        onChange={(e) => setNewIdeaData({ ...newIdeaData, title: e.target.value })}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
                         required
                       />
@@ -403,8 +438,8 @@ const Challenge = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Description</label>
                       <textarea
-                        value={newTeamData.description}
-                        onChange={(e) => setNewTeamData({ ...newTeamData, description: e.target.value })}
+                        value={newIdeaData.description}
+                        onChange={(e) => setNewIdeaData({ ...newIdeaData, description: e.target.value })}
                         rows={3}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
                         required

@@ -31,7 +31,8 @@ app.use(express.json());
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
-  'http://localhost:4000'
+  'http://localhost:4000',
+  'http://localhost:9000'
 ];
 
 // const corsOptions = {

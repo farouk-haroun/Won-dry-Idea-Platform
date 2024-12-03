@@ -75,7 +75,6 @@ export const getAllIdeas = async (req, res) => {
   }
 };
 
-
 // Create a new idea
 export const createIdea = async (req, res) => {
   try {
@@ -83,6 +82,7 @@ export const createIdea = async (req, res) => {
     const savedIdea = await newIdea.save();
     res.status(201).json(savedIdea);
   } catch (error) {
+    console.error('Error creating idea:', error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -110,13 +110,30 @@ export const submitFeedback = async (req, res) => {
     if (!idea) return res.status(404).json({ message: 'Idea not found' });
 
     const feedbackEntry = {
-      ...req.body, // Contains scalability, sustainability, etc.
-      createdBy: req.user.id, // Ensure req.user.id is available through authentication middleware
+      ...req.body,
+      createdBy: req.user.id,
       createdAt: new Date(),
     };
 
     idea.feedbacks.push(feedbackEntry);
     await idea.save();
+    res.status(200).json(idea);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get a single idea by ID
+export const getIdeaById = async (req, res) => {
+  try {
+    const idea = await Idea.findById(req.params.ideaId)
+      .populate('createdBy', 'name email')
+      .populate('team', 'name');
+    
+    if (!idea) {
+      return res.status(404).json({ message: 'Idea not found' });
+    }
+    
     res.status(200).json(idea);
   } catch (error) {
     res.status(500).json({ message: error.message });

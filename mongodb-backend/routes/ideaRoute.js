@@ -1,12 +1,13 @@
 import express from 'express';
-import { getAllIdeas, createIdea, addComment, submitFeedback } from '../controllers/ideaController.js';
+import { getAllIdeas, createIdea, addComment, submitFeedback, getIdeaById } from '../controllers/ideaController.js';
 
 const router = express.Router();
 
-router.get('/ideas', getAllIdeas);
-router.post('/ideas', createIdea);
-router.post('/ideas/:ideaId/comments', addComment);
-router.post('/ideas/:ideaId/feedback', submitFeedback);
+router.get('/', getAllIdeas);
+router.get('/:ideaId', getIdeaById);
+router.post('/', createIdea);
+router.post('/:ideaId/comments', addComment);
+router.post('/:ideaId/feedback', submitFeedback);
 
 export default router;
 

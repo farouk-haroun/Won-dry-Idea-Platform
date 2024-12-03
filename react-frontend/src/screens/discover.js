@@ -213,14 +213,6 @@ const handleSortChange = (e) => {
   </button>
   <button
     className={`px-4 py-2 rounded-full text-sm ${
-      selectedOptions === 'Ideas' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border'
-    }`}
-    onClick={() => toggleOption('Ideas')}
-  >
-    Ideas
-  </button>
-  <button
-    className={`px-4 py-2 rounded-full text-sm ${
       selectedOptions === 'Idea Spaces' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border'
     }`}
     onClick={() => toggleOption('Idea Spaces')}
@@ -253,13 +245,6 @@ const handleSortChange = (e) => {
 </select>
 
           </div>
-          <button 
-            className="text-purple-600 text-sm font-medium flex items-center"
-            onClick={toggleFilter}
-          >
-            Filter
-            <Filter className="ml-1 w-4 h-4" />
-          </button>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
