@@ -110,7 +110,7 @@ const Home = () => {
                 />
                 <div className="md:w-2/3">
                   <h3 className="text-2xl font-bold mb-4">{challenge.title}</h3>
-                  <p className="mb-4">{challenge.description}</p>
+                  // <p className="mb-4">{challenge.description}</p>
                   <div className="flex items-center mb-4">
                     <span className="mr-2">Status:</span>
                     <span className={`px-3 py-1 rounded-full ${
