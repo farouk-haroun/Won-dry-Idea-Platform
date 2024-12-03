@@ -62,7 +62,7 @@ app.use(cors(corsOptions));
 
 // MongoDB Connection and GridFS Setup
 const connectDB = async () => {
-  const dbName = process.env.NODE_ENV === 'test' ? 'test' : 'wondry_platform';
+  const dbName = process.env.NODE_ENV === 'test' ? 'wondry_platform' : 'wondry_platform';
   const MONGO_URI = `${process.env.MONGO_URI}${dbName}`;
 
   try {
